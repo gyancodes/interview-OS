@@ -26,32 +26,48 @@ function LearnInner() {
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load a cached guide when the topic/level selection changes.
+  // Load a guide when the topic/level selection changes. Curated material is
+  // served by the server and always wins over any locally cached AI version.
   useEffect(() => {
-    const cached = getLearningMaterial(topic, level);
-    setMaterial(cached?.material ?? null);
-    setSource(cached?.source ?? "ai");
+    let active = true;
     setError(null);
-    setHydrated(true);
+    setLoading(true);
+    (async () => {
+      const curated = await fetchCuratedMaterial(topic, level);
+      if (!active) return;
+      if (curated) {
+        setMaterial(curated.material);
+        setSource("curated");
+        saveLearningMaterial(topic, level, curated.material, "curated");
+      } else {
+        const cached = getLearningMaterial(topic, level);
+        setMaterial(cached?.material ?? null);
+        setSource(cached?.source ?? "ai");
+      }
+      setLoading(false);
+      setHydrated(true);
+    })();
+    return () => {
+      active = false;
+    };
   }, [topic, level]);
 
   const generate = useCallback(
     async (force = false) => {
       setError(null);
       if (!force) {
-        const cached = getLearningMaterial(topic, level);
-        if (cached) {
-          setMaterial(cached.material);
-          setSource(cached.source ?? "ai");
-          return;
-        }
-        // Curated material is authored in-repo and served by the server when
-        // available; AI generation fills in everything else.
+        // Curated (server) first, then cache; AI generation fills the rest.
         const curated = await fetchCuratedMaterial(topic, level);
         if (curated) {
           setMaterial(curated.material);
           setSource("curated");
           saveLearningMaterial(topic, level, curated.material, "curated");
+          return;
+        }
+        const cached = getLearningMaterial(topic, level);
+        if (cached) {
+          setMaterial(cached.material);
+          setSource(cached.source ?? "ai");
           return;
         }
       }
