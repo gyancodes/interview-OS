@@ -13,7 +13,7 @@ export function TopicCard({ progress }: { progress: TopicProgress }) {
   return (
     <Link
       href={`/practice?topic=${topic.id}`}
-      className="group flex flex-col gap-3 rounded-lg border border-border bg-surface p-5 transition-colors hover:border-border-strong"
+      className="group flex flex-col gap-3 rounded-xl border border-border bg-surface p-5 transition-all hover:border-border-strong hover:shadow-[0_2px_12px_rgba(11,13,18,0.06)]"
     >
       <div className="flex items-start justify-between gap-3">
         <div>

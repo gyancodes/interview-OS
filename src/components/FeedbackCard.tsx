@@ -73,7 +73,7 @@ export function FeedbackCard({
         <ListSection title="What to correct" items={evaluation.corrections} icon="!" tone="weak" />
 
         {evaluation.interviewAnswer ? (
-          <div className="rounded-md border border-border bg-canvas p-4">
+          <div className="rounded-lg border border-border bg-surface-2 p-4">
             <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-accent">
               A stronger interview answer
             </h4>

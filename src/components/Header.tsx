@@ -16,13 +16,13 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-canvas/90 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="flex h-6 w-6 items-center justify-center rounded-[5px] border border-border-strong bg-surface-2 font-mono text-[11px] text-accent">
+    <header className="sticky top-0 z-20 border-b border-border bg-canvas/85 backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+        <Link href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-fg font-mono text-[11px] font-medium text-canvas">
             OS
           </span>
-          <span>InterviewOS</span>
+          <span className="text-[15px]">InterviewOS</span>
         </Link>
 
         <nav aria-label="Main navigation">
@@ -36,8 +36,9 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "rounded-md px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg",
-                      active && "bg-surface-2 text-fg",
+                      "rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-surface-2 hover:text-fg",
+                      active ? "font-medium text-fg" : "text-muted",
+                      active && "bg-surface-2",
                     )}
                   >
                     {item.label}

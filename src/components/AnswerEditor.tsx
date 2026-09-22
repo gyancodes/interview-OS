@@ -31,7 +31,7 @@ export function AnswerEditor({
         disabled={disabled}
         rows={7}
         placeholder={placeholder}
-        className="scrollbar-thin w-full resize-y rounded-md border border-border bg-canvas px-4 py-3 text-sm text-fg placeholder:text-faint focus:border-accent focus:outline-none disabled:opacity-60"
+        className="scrollbar-thin w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-fg transition-colors placeholder:text-faint focus:border-accent focus:bg-surface focus:outline-none disabled:opacity-60"
       />
       <div className="flex items-center justify-between gap-4">
         <span className="text-xs text-faint" aria-live="polite">

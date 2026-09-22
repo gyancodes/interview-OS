@@ -374,7 +374,7 @@ function MockInterviewInner() {
           rows={4}
           placeholder="Answer as you would out loud. ⌘+Enter to send."
           disabled={thinking || summarizing}
-          className="scrollbar-thin w-full resize-y rounded-md border border-border bg-canvas px-4 py-3 text-sm text-fg placeholder:text-faint focus:border-accent focus:outline-none disabled:opacity-60"
+          className="scrollbar-thin w-full resize-y rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm text-fg transition-colors placeholder:text-faint focus:border-accent focus:bg-surface focus:outline-none disabled:opacity-60"
         />
         <div className="flex justify-end">
           <button

@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils";
 
 export const buttonStyles = {
   primary:
-    "inline-flex items-center justify-center gap-2 rounded-md border border-accent/60 bg-accent/15 px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/25 disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-lg bg-fg px-4 py-2 text-sm font-medium text-canvas transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
   secondary:
-    "inline-flex items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-2 px-4 py-2 text-sm font-medium text-fg transition-colors hover:border-border-strong hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface px-4 py-2 text-sm font-medium text-fg transition-colors hover:border-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50",
   ghost:
-    "inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg disabled:cursor-not-allowed disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg disabled:cursor-not-allowed disabled:opacity-50",
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -36,7 +36,7 @@ export function ProgressBar({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label ?? "Progress"}
-      className={cn("h-1.5 w-full overflow-hidden rounded-full bg-surface-2", className)}
+      className={cn("h-1.5 w-full overflow-hidden rounded-full bg-border", className)}
     >
       <div
         className="bar-fill h-full rounded-full bg-accent"
@@ -121,6 +121,6 @@ export function SectionHeading({
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-lg border border-border bg-surface", className)}>{children}</div>
+    <div className={cn("rounded-xl border border-border bg-surface", className)}>{children}</div>
   );
 }

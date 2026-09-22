@@ -64,7 +64,7 @@ export default function DashboardPage() {
       {/* Hero */}
       <section className="animate-fade flex flex-col items-start gap-5 pt-6 sm:pt-10">
         <h1 className="max-w-2xl text-balance text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-          Prepare for your next software engineering interview.
+          Prepare for your next <span className="text-accent">software engineering</span> interview.
         </h1>
         <p className="max-w-xl text-muted">
           Practice live-generated questions, learn from built-in study material, and identify your weak areas.
