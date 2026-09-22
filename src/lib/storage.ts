@@ -196,12 +196,14 @@ export function saveLearningMaterial(
   topic: TopicId,
   level: Difficulty,
   material: LearningMaterial,
+  source: CachedLearningMaterial["source"] = "ai",
 ): void {
   const cache = readJson<Record<string, CachedLearningMaterial>>(LEARNING_CACHE_KEY, {});
   cache[`${topic}::${level}`] = {
     topic,
     level,
     material,
+    source,
     generatedAt: new Date().toISOString(),
   };
   // Keep the cache bounded: drop the oldest entries beyond the cap.

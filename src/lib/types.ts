@@ -151,11 +151,15 @@ export interface LearningMaterial {
   studyChecklist: string[];
 }
 
+/** Where a learning material came from. */
+export type MaterialSource = "curated" | "ai";
+
 /** A generated study guide cached in LocalStorage, keyed by topic + level. */
 export interface CachedLearningMaterial {
   topic: TopicId;
   level: Difficulty;
   material: LearningMaterial;
+  source?: MaterialSource;
   generatedAt: string;
 }
 

@@ -140,6 +140,33 @@ export function requestLearningMaterial(input: {
   return postJson("/api/ai/learn", input);
 }
 
+export interface CuratedMaterialResponse {
+  topic: string;
+  level: string;
+  material: LearningMaterialResponse;
+}
+
+/**
+ * Fetches curated (server-authored) learning material. Returns null when none
+ * exists (404) or the request fails, so callers can fall back to AI generation.
+ */
+export async function fetchCuratedMaterial(
+  topic: string,
+  level: string,
+): Promise<CuratedMaterialResponse | null> {
+  try {
+    const response = await fetch(
+      `/api/materials?topic=${encodeURIComponent(topic)}&level=${encodeURIComponent(level)}`,
+    );
+    if (!response.ok) return null;
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== "object") return null;
+    return payload as CuratedMaterialResponse;
+  } catch {
+    return null;
+  }
+}
+
 export interface InterviewTurnResponse {
   message: string;
   topic: string;

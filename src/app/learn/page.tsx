@@ -6,12 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import { CodeBlock } from "@/components/CodeBlock";
 import { ErrorNote, EmptyState, LoadingState, SectionHeading, buttonStyles } from "@/components/ui";
 import { TOPICS } from "@/data/topics";
-import { AiClientError, requestLearningMaterial } from "@/lib/ai-client";
+import { AiClientError, fetchCuratedMaterial, requestLearningMaterial } from "@/lib/ai-client";
 import { DIFFICULTY_FILTERS, DIFFICULTY_LABELS } from "@/lib/constants";
 import { getLearningMaterial, saveLearningMaterial } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
-import type { Difficulty, LearningMaterial, TopicId } from "@/lib/types";
+import type { Difficulty, LearningMaterial, MaterialSource, TopicId } from "@/lib/types";
 
 const LEVEL_OPTIONS: { value: Difficulty; label: string; hint?: string }[] = DIFFICULTY_FILTERS.filter(
   (option): option is { value: Difficulty; label: string; hint?: string } => option.value !== "mixed",
@@ -21,6 +21,7 @@ function LearnInner() {
   const [topic, setTopic] = useState<TopicId>("javascript");
   const [level, setLevel] = useState<Difficulty>("beginner");
   const [material, setMaterial] = useState<LearningMaterial | null>(null);
+  const [source, setSource] = useState<MaterialSource>("ai");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -29,25 +30,37 @@ function LearnInner() {
   useEffect(() => {
     const cached = getLearningMaterial(topic, level);
     setMaterial(cached?.material ?? null);
+    setSource(cached?.source ?? "ai");
     setError(null);
     setHydrated(true);
   }, [topic, level]);
 
   const generate = useCallback(
     async (force = false) => {
+      setError(null);
       if (!force) {
         const cached = getLearningMaterial(topic, level);
         if (cached) {
           setMaterial(cached.material);
+          setSource(cached.source ?? "ai");
+          return;
+        }
+        // Curated material is authored in-repo and served by the server when
+        // available; AI generation fills in everything else.
+        const curated = await fetchCuratedMaterial(topic, level);
+        if (curated) {
+          setMaterial(curated.material);
+          setSource("curated");
+          saveLearningMaterial(topic, level, curated.material, "curated");
           return;
         }
       }
       setLoading(true);
-      setError(null);
       try {
         const result = await requestLearningMaterial({ topic, level });
         setMaterial(result);
-        saveLearningMaterial(topic, level, result);
+        setSource("ai");
+        saveLearningMaterial(topic, level, result, "ai");
       } catch (err) {
         setError(
           err instanceof AiClientError
@@ -154,6 +167,14 @@ function LearnInner() {
               <span className="text-faint">/</span>
               <span className="rounded-full bg-accent/10 px-2.5 py-0.5 font-medium text-accent">
                 {DIFFICULTY_LABELS[level]}
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2.5 py-0.5 font-medium",
+                  source === "curated" ? "bg-strong/10 text-strong" : "bg-accent/10 text-accent",
+                )}
+              >
+                {source === "curated" ? "Curated" : "AI generated"}
               </span>
             </div>
             <h2 className="text-balance text-xl font-semibold text-fg sm:text-2xl">{material.title}</h2>
