@@ -5,7 +5,9 @@ import { GroqApiError, groqJson } from "@/lib/groq";
 import { questionGenerationPrompt } from "@/lib/prompts";
 import { isTopicId } from "@/data/topics";
 
-import type { GeneratedQuestion } from "@/lib/types";
+import { DIFFICULTIES } from "@/lib/types";
+
+import type { Difficulty, GeneratedQuestion } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -29,11 +31,11 @@ export async function POST(request: Request) {
     // Defensive normalization — the model occasionally drops or mistypes fields.
     const question: GeneratedQuestion = {
       question: String(generated.question ?? "").trim(),
-      difficulty: (["easy", "medium", "hard"] as const).includes(generated.difficulty)
+      difficulty: (DIFFICULTIES as readonly string[]).includes(generated.difficulty)
         ? generated.difficulty
         : difficulty === "mixed"
-          ? "medium"
-          : (difficulty as GeneratedQuestion["difficulty"]),
+          ? "intermediate"
+          : (difficulty as Difficulty),
       topic: String(generated.topic ?? topic),
       category: String(generated.category ?? category ?? "Fundamentals"),
       concepts: toArray(generated.concepts),

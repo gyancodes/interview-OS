@@ -92,7 +92,7 @@ export function relativeTime(iso: string): string {
 }
 
 export function difficultyOrder(difficulty: Difficulty): number {
-  return { easy: 0, medium: 1, hard: 2 }[difficulty];
+  return { beginner: 0, intermediate: 1, advanced: 2, expert: 3 }[difficulty];
 }
 
 /** Builds a stable-ish id for AI generated questions. */

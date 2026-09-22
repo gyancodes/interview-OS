@@ -5,6 +5,7 @@ import { GroqApiError, groqJson } from "@/lib/groq";
 import { interviewSummaryPrompt, interviewTurnPrompt, sanitizeTranscript } from "@/lib/prompts";
 
 import type { InterviewSummary, InterviewTurnResponse } from "@/lib/types";
+import { DIFFICULTIES } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
       const turn: InterviewTurnResponse = {
         message: String(raw.message ?? "").trim(),
         topic: String(raw.topic ?? "General").trim(),
-        difficulty: (["easy", "medium", "hard"] as const).includes(raw.difficulty) ? raw.difficulty : "medium",
+        difficulty: (DIFFICULTIES as readonly string[]).includes(raw.difficulty) ? raw.difficulty : "intermediate",
         focus: String(raw.focus ?? "").trim(),
         shouldWrapUp: raw.shouldWrapUp === true,
       };

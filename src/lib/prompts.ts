@@ -14,7 +14,16 @@ Technical accuracy rules (highest priority):
 - Never invent APIs, methods, flags, or configuration options.
 - Clearly distinguish implementation details that vary by runtime or version.
 - Concise interview-ready answers first; keep depth in the explanation.
-- Do not overcomplicate beginner-level questions.
+- Do not overcomplicate beginner-level material.
+`;
+
+/** What each difficulty level means, shared by question and material generation. */
+const LEVEL_GUIDE = `
+Difficulty level definitions (calibrate strictly):
+- beginner: entry-level screening. Core vocabulary and fundamental mechanics. A correct, clear explanation with one simple example is the expected answer. No tricks, no obscure edge cases.
+- intermediate: 1-3 years of applied experience. How things actually behave in real applications: tradeoffs, common pitfalls, debugging scenarios, "what happens when X".
+- advanced: senior depth. Internals, edge cases, performance implications, and design tradeoffs. The candidate is expected to reason about why, not just what.
+- expert: staff/expert depth. Spec-level details, subtle or surprising behavior, cross-system implications — the nuance that separates top-percentile engineers.
 `;
 
 function topicContext(topicId: TopicId, category?: string): string {
@@ -33,12 +42,16 @@ export function questionGenerationPrompt(options: {
   const system = `You are a senior software engineer conducting real technical interviews. You write questions that distinguish engineers who understand concepts from engineers who memorized definitions.
 
 Rules for questions:
-- Resemble questions asked in real software engineering interviews at the requested difficulty.
-- Test understanding, not trivia. Avoid "what is X" when "how does X work" or "when would you choose X" is better.
-- One focused concept per question. No ambiguous or multi-part questions.
-- Answers must be verifiable against established documentation.
-- Ideal answers: 3-6 sentences, interview-quality, no fluff.
-- Explanations cover: what it means, why it works, what happens internally, common misconceptions, and real-world use cases.
+- Write like a real interviewer speaks: prefer scenario, "how does X work", "what happens when", and "walk me through" framing over textbook definitions.
+- Test understanding, not trivia. Pure "what is X" recall is banned at every level above beginner.
+- Exactly one focused concept per question. The question must be self-contained and answerable verbally in 2-3 minutes.
+- The question must have a correct, verifiable answer grounded in established, documented behavior.
+- Calibrate strictly to the requested level (see level definitions). If genuinely unsure between two levels, report the lower one in the difficulty field — never inflate.
+- Ideal answers: 4-8 sentences. Lead with the direct answer, then the mechanism with a concrete example, then the nuance or tradeoff that shows real understanding.
+- Explanations cover: how it works internally, why it is designed that way, 2-3 common misconceptions, and where it matters in production.
+- followUps: 2 probing follow-ups a strong interviewer would ask next, slightly harder than the main question.
+- Vary the angle across questions (mechanism, debugging, tradeoffs, design, failure modes) so sessions never feel templated.
+${LEVEL_GUIDE}
 ${ACCURACY_RULES}`;
 
   const avoid =
@@ -50,21 +63,63 @@ ${ACCURACY_RULES}`;
 
   const user = `Generate ONE technical interview question.
 ${topicContext(options.topicId, options.category)}
-Requested difficulty: ${options.difficulty}.${avoid}
+Requested level: ${options.difficulty}.${avoid}
 
 Respond with JSON only, using exactly this shape:
 {
   "question": "the interview question",
-  "difficulty": "easy" | "medium" | "hard",
+  "difficulty": "beginner" | "intermediate" | "advanced" | "expert",
   "topic": "${options.topicId}",
   "category": "one of the valid categories listed above",
   "concepts": ["2-4 concepts this question tests"],
-  "idealAnswer": "concise interview-quality answer, 3-6 sentences",
-  "explanation": "deeper explanation: internals, why it works, misconceptions, use cases",
+  "idealAnswer": "interview-quality answer, 4-8 sentences: direct answer, mechanism with example, nuance",
+  "explanation": "deeper explanation: internals, why it works, misconceptions, production relevance",
   "code": "short illustrative code example, or empty string if not relevant",
-  "followUps": ["1-2 natural follow-up questions an interviewer would ask"],
+  "followUps": ["2 natural follow-up questions an interviewer would ask next"],
   "interviewTip": "one sentence of advice on how to explain this concept in an interview"
 }`;
+
+  return { system, user };
+}
+
+export function learningMaterialPrompt(options: {
+  topicId: TopicId;
+  level: string;
+}): { system: string; user: string } {
+  const system = `You are a senior engineer and technical mentor writing study material for interview preparation. Your material is rendered in a learning app, one section at a time.
+
+Writing rules:
+- Teach the way a great mentor would: build intuition first, then mechanics, then the details interviews probe.
+- Every section must be self-contained, technically accurate and concrete — prefer specific examples and numbers over vague statements.
+- Include code only where it genuinely clarifies; keep snippets short and idiomatic.
+- commonMistakes must be real, frequently observed mistakes with the actual consequence and the correct understanding.
+- interviewFocus: what interviewers at this level actually ask about this topic.
+- studyChecklist: concrete, checkable practice actions (never "learn more about X").
+${LEVEL_GUIDE}
+${ACCURACY_RULES}`;
+
+  const user = `Create interview-prep learning material.
+${topicContext(options.topicId)}
+Target level: ${options.level}.
+
+Respond with JSON only, using exactly this shape:
+{
+  "title": "short title for this study guide",
+  "overview": "2-4 sentences orienting the learner: what this topic covers and why interviews care",
+  "prerequisites": ["0-3 things the learner should already know"],
+  "sections": [
+    {
+      "title": "section title",
+      "content": "the explanation, in markdown-lite plain text (short paragraphs and simple lists)",
+      "code": "short code example if it clarifies, else empty string",
+      "keyPoints": ["2-3 one-line takeaways"]
+    }
+  ],
+  "commonMistakes": [{ "mistake": "the mistake people make", "fix": "the correct understanding" }],
+  "interviewFocus": ["3-5 things interviewers probe on this topic at this level"],
+  "studyChecklist": ["4-6 concrete practice actions"]
+}
+Include 4-6 sections ordered from foundations to interview-level detail.`;
 
   return { system, user };
 }
@@ -213,7 +268,7 @@ Respond with JSON only:
 {
   "message": "the interviewer's next message",
   "topic": "the main topic of this turn, 1-3 words",
-  "difficulty": "easy" | "medium" | "hard",
+  "difficulty": "beginner" | "intermediate" | "advanced" | "expert",
   "focus": "the concept this turn probes",
   "shouldWrapUp": false
 }`;

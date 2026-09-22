@@ -7,28 +7,24 @@ import type {
   InterviewLevel,
   InterviewRole,
   PracticeCount,
-  QuestionSource,
 } from "@/lib/types";
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  easy: "Easy",
-  medium: "Medium",
-  hard: "Hard",
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  expert: "Expert",
 };
 
-export const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string }[] = [
-  { value: "mixed", label: "Mixed" },
-  { value: "easy", label: "Easy" },
-  { value: "medium", label: "Medium" },
-  { value: "hard", label: "Hard" },
+export const DIFFICULTY_FILTERS: { value: DifficultyFilter; label: string; hint?: string }[] = [
+  { value: "mixed", label: "Mixed", hint: "AI picks a level per question for a varied session" },
+  { value: "beginner", label: "Beginner", hint: "Core fundamentals and clear mental models" },
+  { value: "intermediate", label: "Intermediate", hint: "Real-world behavior, tradeoffs and pitfalls" },
+  { value: "advanced", label: "Advanced", hint: "Internals, edge cases and design tradeoffs" },
+  { value: "expert", label: "Expert", hint: "Spec-level nuance and subtle behavior" },
 ];
 
 export const PRACTICE_COUNTS: PracticeCount[] = [5, 10, 20];
-
-export const QUESTION_SOURCES: { value: QuestionSource; label: string; hint: string }[] = [
-  { value: "bank", label: "Question Bank", hint: "Curated, reviewed interview questions" },
-  { value: "ai", label: "Generate with AI", hint: "Fresh questions written by Groq" },
-];
 
 export const CONFIDENCE_OPTIONS: {
   value: Confidence;

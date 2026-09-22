@@ -9,21 +9,7 @@ import { TOPICS } from "@/data/topics";
 import type { Attempt, TopicId, TopicProgress, WeakArea } from "@/lib/types";
 import { confidenceScore } from "@/lib/utils";
 
-/**
- * Total question count per topic shown in the dashboard. AI-generated questions
- * are unbounded, so we present progress against the curated bank size.
- */
-export function bankSizeByTopic(): Record<TopicId, number> {
-  return TOPICS.reduce(
-    (acc, topic) => {
-      acc[topic.id] = 0;
-      return acc;
-    },
-    {} as Record<TopicId, number>,
-  );
-}
-
-export function computeTopicProgress(attempts: Attempt[], bankSizes: Record<TopicId, number>): TopicProgress[] {
+export function computeTopicProgress(attempts: Attempt[]): TopicProgress[] {
   const byTopic = new Map<TopicId, Attempt[]>();
   for (const attempt of attempts) {
     const list = byTopic.get(attempt.topic) ?? [];
@@ -35,15 +21,17 @@ export function computeTopicProgress(attempts: Attempt[], bankSizes: Record<Topi
     const topicAttempts = byTopic.get(topic.id) ?? [];
     // Progress counts distinct questions attempted, not raw attempts.
     const distinctQuestions = new Set(topicAttempts.map((attempt) => attempt.questionId)).size;
-    const total = bankSizes[topic.id] ?? 0;
     const strong = topicAttempts.filter((attempt) => attempt.confidence === "strong").length;
     const partial = topicAttempts.filter((attempt) => attempt.confidence === "partial").length;
     const weak = topicAttempts.filter((attempt) => attempt.confidence === "weak").length;
     return {
       topic: topic.id,
       attempted: distinctQuestions,
-      total,
-      percent: total > 0 ? Math.min(100, Math.round((distinctQuestions / total) * 100)) : 0,
+      // Mastery: how consistently this topic has been answered well.
+      percent:
+        topicAttempts.length > 0
+          ? Math.min(100, Math.round(confidenceScore(topicAttempts.map((attempt) => attempt.confidence)) * 100))
+          : 0,
       strong,
       partial,
       weak,

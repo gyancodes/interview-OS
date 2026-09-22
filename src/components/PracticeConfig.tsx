@@ -2,13 +2,9 @@
 
 import { buttonStyles } from "@/components/ui";
 import { TOPICS } from "@/data/topics";
-import {
-  DIFFICULTY_FILTERS,
-  PRACTICE_COUNTS,
-  QUESTION_SOURCES,
-} from "@/lib/constants";
+import { DIFFICULTY_FILTERS, PRACTICE_COUNTS } from "@/lib/constants";
 
-import type { DifficultyFilter, PracticeCount, QuestionSource, TopicId } from "@/lib/types";
+import type { DifficultyFilter, PracticeCount, TopicId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function OptionGroup<T extends string | number>({
@@ -58,7 +54,6 @@ function OptionGroup<T extends string | number>({
 export interface PracticeConfigState {
   topic: TopicId;
   difficulty: DifficultyFilter;
-  source: QuestionSource;
   count: PracticeCount;
 }
 
@@ -97,21 +92,13 @@ export function PracticeConfig({
         </div>
       </fieldset>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <OptionGroup
-          legend="Difficulty"
-          options={DIFFICULTY_FILTERS}
-          value={config.difficulty}
-          onChange={(difficulty) => onChange({ ...config, difficulty })}
-        />
-        <OptionGroup
-          legend="Question source"
-          options={QUESTION_SOURCES}
-          value={config.source}
-          onChange={(source) => onChange({ ...config, source })}
-          renderHint
-        />
-      </div>
+      <OptionGroup
+        legend="Skill level"
+        options={DIFFICULTY_FILTERS}
+        value={config.difficulty}
+        onChange={(difficulty) => onChange({ ...config, difficulty })}
+        renderHint
+      />
 
       <OptionGroup
         legend="Number of questions"
@@ -120,9 +107,13 @@ export function PracticeConfig({
         onChange={(count) => onChange({ ...config, count })}
       />
 
+      <p className="text-xs text-faint">
+        Every question is generated live by AI for this exact topic and level — no two sessions are the same.
+      </p>
+
       <div>
         <button type="button" onClick={onStart} disabled={starting} className={buttonStyles.primary}>
-          {starting ? "Preparing session…" : "Start Practice"}
+          {starting ? "Generating first question…" : "Start Practice"}
         </button>
       </div>
     </div>

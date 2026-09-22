@@ -3,7 +3,7 @@
  * handling so components never parse raw error payloads themselves.
  */
 
-import type { ApiErrorPayload } from "@/lib/types";
+import type { ApiErrorPayload, Difficulty } from "@/lib/types";
 
 export class AiClientError extends Error {
   readonly code: ApiErrorPayload["code"];
@@ -53,7 +53,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 
 export interface GeneratedQuestionResponse {
   question: string;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: Difficulty;
   topic: string;
   category: string;
   concepts: string[];
@@ -123,10 +123,27 @@ export function requestExplanation(input: {
   return postJson("/api/ai/explain", input);
 }
 
+export interface LearningMaterialResponse {
+  title: string;
+  overview: string;
+  prerequisites: string[];
+  sections: { title: string; content: string; code?: string; keyPoints: string[] }[];
+  commonMistakes: { mistake: string; fix: string }[];
+  interviewFocus: string[];
+  studyChecklist: string[];
+}
+
+export function requestLearningMaterial(input: {
+  topic: string;
+  level: string;
+}): Promise<LearningMaterialResponse> {
+  return postJson("/api/ai/learn", input);
+}
+
 export interface InterviewTurnResponse {
   message: string;
   topic: string;
-  difficulty: "easy" | "medium" | "hard";
+  difficulty: Difficulty;
   focus: string;
   shouldWrapUp: boolean;
 }

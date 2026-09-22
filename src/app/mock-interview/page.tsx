@@ -49,7 +49,7 @@ function MockInterviewInner() {
 
   const startedAt = useRef<number>(0);
   const questionCount = useRef<number>(0);
-  const lastDifficulty = useRef<string>("easy");
+  const lastDifficulty = useRef<string>("beginner");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -119,7 +119,7 @@ function MockInterviewInner() {
   const start = useCallback(() => {
     startedAt.current = Date.now();
     questionCount.current = 0;
-    lastDifficulty.current = "easy";
+    lastDifficulty.current = "beginner";
     setTurns([]);
     setSummary(null);
     setScreen("live");

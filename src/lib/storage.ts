@@ -9,6 +9,9 @@
 
 import type {
   Attempt,
+  CachedLearningMaterial,
+  Difficulty,
+  LearningMaterial,
   MockInterviewRecord,
   Question,
   RecentQuestion,
@@ -171,6 +174,42 @@ export function addMockInterviewRecord(record: MockInterviewRecord): void {
 
 export function clearMockInterviewHistory(): void {
   writeJson(KEYS.mockInterviewHistory, []);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Learning material cache                                                     */
+/* -------------------------------------------------------------------------- */
+
+const LEARNING_CACHE_KEY = "interviewos.learningMaterials";
+const MAX_LEARNING_CACHE = 60;
+
+export function getLearningMaterial(
+  topic: TopicId,
+  level: Difficulty,
+): CachedLearningMaterial | undefined {
+  return readJson<Record<string, CachedLearningMaterial>>(LEARNING_CACHE_KEY, {})[
+    `${topic}::${level}`
+  ];
+}
+
+export function saveLearningMaterial(
+  topic: TopicId,
+  level: Difficulty,
+  material: LearningMaterial,
+): void {
+  const cache = readJson<Record<string, CachedLearningMaterial>>(LEARNING_CACHE_KEY, {});
+  cache[`${topic}::${level}`] = {
+    topic,
+    level,
+    material,
+    generatedAt: new Date().toISOString(),
+  };
+  // Keep the cache bounded: drop the oldest entries beyond the cap.
+  const entries = Object.entries(cache).sort(
+    (a, b) =>
+      new Date(b[1].generatedAt).getTime() - new Date(a[1].generatedAt).getTime(),
+  );
+  writeJson(LEARNING_CACHE_KEY, Object.fromEntries(entries.slice(0, MAX_LEARNING_CACHE)));
 }
 
 /* -------------------------------------------------------------------------- */

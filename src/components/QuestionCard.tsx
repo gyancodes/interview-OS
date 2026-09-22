@@ -32,12 +32,13 @@ export function QuestionCard({
         <span
           className={cn(
             "ml-auto rounded-full px-2.5 py-0.5 font-medium",
-            difficulty === "easy" && "bg-strong/10 text-strong",
-            difficulty === "medium" && "bg-partial/10 text-partial",
-            difficulty === "hard" && "bg-weak/10 text-weak",
+            difficulty === "beginner" && "bg-strong/10 text-strong",
+            difficulty === "intermediate" && "bg-partial/10 text-partial",
+            difficulty === "advanced" && "bg-weak/10 text-weak",
+            difficulty === "expert" && "bg-accent/10 text-accent",
           )}
         >
-          {DIFFICULTY_LABELS[difficulty]}
+          {DIFFICULTY_LABELS[difficulty] ?? difficulty}
         </span>
       </div>
 

@@ -20,10 +20,12 @@ export const TOPIC_IDS = [
 
 export type TopicId = (typeof TOPIC_IDS)[number];
 
-export type Difficulty = "easy" | "medium" | "hard";
+export const DIFFICULTIES = ["beginner", "intermediate", "advanced", "expert"] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
 export type DifficultyFilter = Difficulty | "mixed";
 export type Confidence = "weak" | "partial" | "strong";
-export type QuestionSource = "bank" | "ai";
+/** Every question is generated live by the AI — there is no static bank. */
+export type QuestionSource = "ai";
 export type PracticeCount = 5 | 10 | 20;
 
 /** A question from the local, curated question bank. */
@@ -122,13 +124,48 @@ export interface Explanation {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Learning materials                                                         */
+/* -------------------------------------------------------------------------- */
+
+/** One chapter of a generated study guide. */
+export interface LearningSection {
+  title: string;
+  content: string;
+  code?: string;
+  keyPoints: string[];
+}
+
+export interface LearningMistake {
+  mistake: string;
+  fix: string;
+}
+
+/** Shape returned by POST /api/ai/learn. */
+export interface LearningMaterial {
+  title: string;
+  overview: string;
+  prerequisites: string[];
+  sections: LearningSection[];
+  commonMistakes: LearningMistake[];
+  interviewFocus: string[];
+  studyChecklist: string[];
+}
+
+/** A generated study guide cached in LocalStorage, keyed by topic + level. */
+export interface CachedLearningMaterial {
+  topic: TopicId;
+  level: Difficulty;
+  material: LearningMaterial;
+  generatedAt: string;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Practice session configuration                                             */
 /* -------------------------------------------------------------------------- */
 
 export interface PracticeConfig {
   topic: TopicId;
   difficulty: DifficultyFilter;
-  source: QuestionSource;
   count: PracticeCount;
   category?: string;
 }
@@ -139,8 +176,9 @@ export interface PracticeConfig {
 
 export interface TopicProgress {
   topic: TopicId;
+  /** Distinct questions practiced in this topic. */
   attempted: number;
-  total: number;
+  /** Mastery: weighted share of strong/partial answers (0-100). */
   percent: number;
   strong: number;
   partial: number;

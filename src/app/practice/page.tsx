@@ -11,7 +11,6 @@ import { FeedbackCard } from "@/components/FeedbackCard";
 import { PracticeConfig, type PracticeConfigState } from "@/components/PracticeConfig";
 import { QuestionCard } from "@/components/QuestionCard";
 import { ErrorNote, LoadingState, buttonStyles } from "@/components/ui";
-import { buildBankSession } from "@/data/questions";
 import { TOPIC_NAMES, isTopicId } from "@/data/topics";
 import {
   AiClientError,
@@ -46,7 +45,6 @@ function PracticeInner() {
   const [config, setConfig] = useState<PracticeConfigState>({
     topic: "javascript",
     difficulty: "mixed",
-    source: "ai",
     count: 5,
   });
 
@@ -128,16 +126,7 @@ function PracticeInner() {
     setIndex(0);
     setScreen("session");
 
-    if (config.source === "bank") {
-      const session = buildBankSession(
-        { topic: config.topic, difficulty: config.difficulty },
-        config.count,
-      );
-      setQueue(session.map((question) => ({ ...question, source: "bank" as const })));
-      return;
-    }
-
-    // AI source: generate the first question; subsequent ones generate on demand.
+    // Questions are always generated live: first question now, the rest on demand.
     setGenerating(true);
     try {
       const generated = await generateNextQuestion(config.topic, config.difficulty);
@@ -197,43 +186,39 @@ function PracticeInner() {
         return;
       }
 
-      if (config.source === "ai") {
-        // Generate the next question on demand.
-        setGenerating(true);
-        setGenerateError(null);
-        try {
-          const generated = await generateNextQuestion(config.topic, config.difficulty);
-          setQueue((previous) => {
-            const copy = [...previous];
-            copy[nextIndex] = {
-              id: `ai-${config.topic}-${Date.now()}`,
-              topic: isTopicId(config.topic) ? config.topic : "javascript",
-              category: generated.category,
-              difficulty: generated.difficulty,
-              question: generated.question,
-              idealAnswer: generated.idealAnswer,
-              explanation: generated.explanation,
-              code: generated.code || undefined,
-              tags: generated.concepts,
-              followUps: generated.followUps,
-              interviewTip: generated.interviewTip,
-              concepts: generated.concepts,
-              source: "ai",
-            };
-            return copy;
-          });
-          setIndex(nextIndex);
-        } catch (error) {
-          setGenerateError(
-            error instanceof AiClientError
-              ? error.message
-              : "Could not generate the next question.",
-          );
-        } finally {
-          setGenerating(false);
-        }
-      } else {
+      // Generate the next question on demand.
+      setGenerating(true);
+      setGenerateError(null);
+      try {
+        const generated = await generateNextQuestion(config.topic, config.difficulty);
+        setQueue((previous) => {
+          const copy = [...previous];
+          copy[nextIndex] = {
+            id: `ai-${config.topic}-${Date.now()}`,
+            topic: isTopicId(config.topic) ? config.topic : "javascript",
+            category: generated.category,
+            difficulty: generated.difficulty,
+            question: generated.question,
+            idealAnswer: generated.idealAnswer,
+            explanation: generated.explanation,
+            code: generated.code || undefined,
+            tags: generated.concepts,
+            followUps: generated.followUps,
+            interviewTip: generated.interviewTip,
+            concepts: generated.concepts,
+            source: "ai",
+          };
+          return copy;
+        });
         setIndex(nextIndex);
+      } catch (error) {
+        setGenerateError(
+          error instanceof AiClientError
+            ? error.message
+            : "Could not generate the next question.",
+        );
+      } finally {
+        setGenerating(false);
       }
     },
     [current, index, config, recordAttempt, resetQuestionState, generateNextQuestion],

@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 import { TopicCard } from "@/components/TopicCard";
 import { WeakAreaCard } from "@/components/WeakAreaCard";
 import { EmptyState, SectionHeading, buttonStyles } from "@/components/ui";
-import { BANK_SIZES } from "@/data/questions";
 import { TOPIC_NAMES } from "@/data/topics";
 import { computeOverallReadiness, computeTopicProgress, computeWeakAreas } from "@/lib/progress";
 import {
@@ -38,7 +37,7 @@ export default function DashboardPage() {
   }, []);
 
   const progressList: TopicProgress[] = useMemo(
-    () => computeTopicProgress(attempts, BANK_SIZES),
+    () => computeTopicProgress(attempts),
     [attempts],
   );
 
@@ -68,11 +67,14 @@ export default function DashboardPage() {
           Prepare for your next software engineering interview.
         </h1>
         <p className="max-w-xl text-muted">
-          Practice concepts, explain your thinking, and identify your weak areas.
+          Practice live-generated questions, learn from built-in study material, and identify your weak areas.
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/practice" className={buttonStyles.primary}>
             Start Practice
+          </Link>
+          <Link href="/learn" className={buttonStyles.secondary}>
+            Learning Materials
           </Link>
           <Link href="/mock-interview" className={buttonStyles.secondary}>
             AI Mock Interview
@@ -144,7 +146,7 @@ export default function DashboardPage() {
 
       {/* Topics */}
       <section>
-        <SectionHeading title="Topics" hint="Progress is measured against the curated question bank" />
+        <SectionHeading title="Topics" hint="Mastery reflects how consistently you answer each topic well" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {progressList.map((progress) => (
             <TopicCard key={progress.topic} progress={progress} />

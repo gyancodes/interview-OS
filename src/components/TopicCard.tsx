@@ -29,12 +29,14 @@ export function TopicCard({ progress }: { progress: TopicProgress }) {
 
       <div className="flex items-center justify-between text-xs text-muted">
         <span>
-          {progress.attempted} / {progress.total} {pluralize(progress.total, "question")} practiced
+          {progress.attempted > 0
+            ? `${progress.attempted} ${pluralize(progress.attempted, "question")} practiced`
+            : "Nothing practiced yet"}
         </span>
-        <span className="font-mono">{progress.percent}%</span>
+        <span className="font-mono">{progress.percent}% mastery</span>
       </div>
 
-      <ProgressBar percent={progress.percent} label={`${topic.name} progress`} />
+      <ProgressBar percent={progress.percent} label={`${topic.name} mastery`} />
 
       <span className="mt-1 text-xs font-medium text-accent opacity-0 transition-opacity group-hover:opacity-100">
         {progress.attempted > 0 ? "Continue" : "Start"} →
