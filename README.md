@@ -82,10 +82,6 @@ src/
 
 The Groq API key is only read inside server-side route handlers (`src/lib/groq.ts`) and is never sent to the browser.
 
-## Contributing
-
-Contributions are welcome. Before opening a pull request, please read the [contribution guidelines](CONTRIBUTING.md). Good first issues are labeled `good first issue` on the issue tracker, and UI-focused ones are also labeled `ui`.
-
 ## License
 
-This project is open source. Add a license (for example, MIT) before publishing contributions that you want governed by specific terms.
+This project is open source. Add a license (for example, MIT) if you want it governed by specific terms.
