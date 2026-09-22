@@ -2,121 +2,150 @@ import type { LearningMaterial } from "@/lib/types";
 
 /**
  * Curated learning material: JavaScript Events.
- * Authored from a deep-dive conversation on JavaScript events and maintained
- * in-repo; served by GET /api/materials instead of being bundled into client
- * JavaScript.
+ * Curated from a real learner Q&A session that worked through two projects —
+ * a background color changer and a BMI calculator — covering forEach,
+ * addEventListener, the event object (e), e.target, form submit,
+ * preventDefault, reading input values and validation. Served by
+ * GET /api/materials — never imported into client components.
  */
 export const javascriptEventsMaterial: LearningMaterial = {
-  title: "JavaScript Events: From First Click to Event Delegation",
+  title: "JavaScript Events: From the Color Changer to the BMI Calculator",
   overview:
-    "Events are how the browser tells your code that something happened — a click, a key press, a finished network request. This guide builds the full mental model: how events travel through the DOM, how to listen and clean up correctly, and the delegation pattern that separates working code from interview-grade answers.",
+    "Built from a real Q&A session around two beginner projects: a background color changer and a BMI calculator. It answers the questions that confuse everyone: what (btn) and (e) actually are, where the event object's value comes from without you writing it, what e.target gives you, why forms need preventDefault(), and how to read, validate and display user input correctly.",
   prerequisites: [
-    "Basic HTML and the DOM tree",
-    "Functions, callbacks, and closures in JavaScript",
-    "How a page loads in the browser",
+    "Basic HTML: tags, ids and classes",
+    "Functions, parameters and callbacks",
+    "How to open the browser console and log values",
   ],
   sections: [
     {
-      title: "What an event actually is (and where it runs)",
+      title: "The setup: querySelectorAll + forEach + addEventListener",
       content:
-        "An event is a signal that something happened: a click, a key press, a form submission, a finished network request, even a tab becoming visible.\n- Your code never polls for these things. The browser detects them and dispatches an event object to every listener registered for that signal.\n- Key mental model: JavaScript runs on a single main thread. The browser keeps a queue of tasks. When you click, the browser places a task on that queue; the event loop picks it up and runs your handler.\n- This is why handlers never run in the middle of other code — only between tasks. It also means one heavy handler delays every other event the user triggers.",
+        "- document.querySelectorAll(\".color-button\") collects every matching element into a list. You want one instruction to apply to all four buttons without writing the same code four times.\n- forEach() walks that list one by one and runs your callback for each element. The parameter — btn — is simply the name you give to the current element; it could be banana and the code would work identically.\n- Inside the loop, btn.addEventListener(\"click\", ...) registers a function on that specific button: 'whenever this button is clicked, run this function.'\n- Two different callbacks are in play: the forEach callback runs once per button at setup time; the click callback runs later, every time that button is clicked. Keeping those two moments separate is the key to the whole pattern.",
+      code: "const buttons = document.querySelectorAll(\".color-button\");\nconst body = document.querySelector(\"body\");\n\nbuttons.forEach((btn) => {\n  // Setup time: runs once per button, at script load.\n  btn.addEventListener(\"click\", (e) => {\n    // Click time: runs later, every time THIS button is clicked.\n    console.log(btn);      // the button we configured\n    console.log(e);        // the event object from the browser\n    console.log(e.target); // the element that was clicked\n\n    if (e.target.id === \"grey\") {\n      body.style.backgroundColor = \"grey\";\n    }\n  });\n});",
       keyPoints: [
-        "An event is a browser-dispatched signal, not something your code detects",
-        "Handlers run as tasks on the main thread via the event loop",
-        "One slow handler delays every other event in the page",
+        "forEach gives your callback the current item, one at a time",
+        "btn is just a parameter name — the name is yours to choose",
+        "addEventListener registers a function to run later, when the event occurs",
       ],
     },
     {
-      title: "Listening the right way: addEventListener",
+      title: "What (e) is — and where its value comes from",
       content:
-        "- Prefer addEventListener over inline onclick and on-property handlers: it supports multiple listeners per element, options, and clean removal.\n- The options object: capture (run during the capture phase), once (auto-remove after the first call), passive (promise not to call preventDefault, letting the browser scroll immediately), and signal (an AbortSignal for bulk removal).\n- removeEventListener requires the exact same function reference that was added. An inline arrow function can never be removed, which is the root cause of most listener leaks.\n- Modern cleanup: pass one AbortController's signal to many addEventListener calls, then call abort() once to remove them all. This is the cleanest pattern in component-based apps.",
-      code: "const button = document.querySelector(\"#save\");\n\nfunction onSave() {\n  console.log(\"saved\");\n}\n\nbutton.addEventListener(\"click\", onSave);\nbutton.addEventListener(\"click\", onSave, { once: true, passive: true });\n\n// Removal matches by reference — same function in, same function out.\nbutton.removeEventListener(\"click\", onSave);\n\n// Bulk cleanup with an AbortSignal\nconst controller = new AbortController();\nbutton.addEventListener(\"click\", onSave, { signal: controller.signal });\nwindow.addEventListener(\"resize\", onResize, { signal: controller.signal });\ncontroller.abort(); // removes both listeners in one call",
+        "- When an event happens, the browser builds an event object: a little report describing what happened — the event type, which element was involved, pointer coordinates, key values, plus methods like preventDefault().\n- You never create or assign e yourself. The browser calls your callback and passes the event object as the first argument — conceptually yourCallback(eventObject), which makes e = eventObject.\n- The name is yours: (e), (event) and (clickInformation) all work identically. e or event are the conventional choices.\n- If you do not need the event information, you can omit the parameter entirely: btn.addEventListener(\"click\", () => { ... }) is perfectly valid.",
+      code: "// The browser does (conceptually):\n// yourCallback({ type: \"click\", target: redButton, ... })\n\nbtn.addEventListener(\"click\", (e) => console.log(e));\nbtn.addEventListener(\"click\", (event) => console.log(event));\nbtn.addEventListener(\"click\", (clickInformation) => console.log(clickInformation));\n// All three are identical — the name is yours.\n\n// No event info needed? Omit the parameter entirely:\nbtn.addEventListener(\"click\", () => {\n  body.style.backgroundColor = btn.id;\n});",
       keyPoints: [
-        "addEventListener supports options that on-property handlers cannot express",
-        "removeEventListener matches by function reference, not by code",
-        "AbortController.signal is the modern way to remove many listeners at once",
+        "The event object is created and passed in by the browser, not by you",
+        "e is just the parameter name receiving that object",
+        "Omitting the parameter is fine when you need no event information",
       ],
     },
     {
-      title: "The event object and the three phases",
+      title: "e.target — which element was clicked",
       content:
-        "Every listener receives an event object describing what happened: event.type, the target element, mouse coordinates, key values, and methods that change default behavior.\n- Events travel through the DOM in three phases: the capture phase travels from window down to the target, the target phase runs listeners on the target itself, and the bubble phase travels back up to window.\n- Listeners you write normally run in the bubble phase, because that is the default (capture: false).\n- target is the element the event originated on. currentTarget is the element whose listener is currently running. In delegation code this distinction is the entire trick.\n- stopPropagation stops the event from traveling further. stopImmediatePropagation also stops other listeners attached to the same element. preventDefault cancels the browser's default action (following a link, submitting a form) without stopping propagation.",
-      code: "list.addEventListener(\"click\", (event) => {\n  console.log(event.target);        // deepest element clicked, e.g. the <span>\n  console.log(event.currentTarget); // element the listener is attached to, the <ul>\n});",
+        "- e.target is the element where the event originated. Click the Grey button and target is the Grey button itself; e.target.id is then \"grey\".\n- btn and e.target are different things: btn is the button you are configuring at setup time (it comes from forEach); e.target is the element involved in the event at click time (it comes from the browser's event object).\n- For a direct click on a simple button, btn and e.target usually refer to the same element — but they are obtained in different ways, and that distinction matters as soon as your markup gets nested (clicking a span inside the button gives target = the span).",
+      code: "<button id=\"grey\">Grey</button>\n\n// After clicking the Grey button:\nbtn.addEventListener(\"click\", (e) => {\n  console.log(e.target);    // <button id=\"grey\">Grey</button>\n  console.log(e.target.id); // \"grey\"\n});",
       keyPoints: [
-        "Capture goes down the tree, target runs in place, bubble goes back up",
-        "target is where the event started; currentTarget is whose listener is running",
-        "preventDefault cancels the default action; stopPropagation only affects listeners",
+        "e.target is the element where the event originated",
+        "btn is setup-time configuration; e.target is event-time information",
+        "They often match on simple buttons but diverge inside nested markup",
       ],
     },
     {
-      title: "Event delegation: one listener for many elements",
+      title: "Forms: the submit event and preventDefault",
       content:
-        "- Because events bubble, a parent can listen for events that happen to any of its descendants. One listener on the list handles clicks for every item — including items added after the listener was attached.\n- The pattern: attach one listener to a stable container, find the real target with closest(selector), and branch on what was clicked.\n- This is the standard technique for dynamic lists, tables, and any UI where elements come and go. It reduces memory, removes rebinding bugs, and survives re-renders.\n- Limits: delegation relies on bubbling. Events that do not bubble (focus, blur, element scroll) need either the bubbling alternatives focusin/focusout, or capture: true on the container.",
-      code: "document.querySelector(\"#todos\").addEventListener(\"click\", (event) => {\n  const item = event.target.closest(\"li\");\n  if (!item) return;\n\n  if (event.target.matches(\".delete\")) {\n    item.remove();\n  } else {\n    item.classList.toggle(\"done\");\n  }\n});\n// Works for items added later — no re-binding needed.",
+        "- Listen for submit on the form element, not click on the submit button: pressing Enter also submits a form, and that never touches the button's click handler.\n- By default, submitting a form makes the browser attempt its normal submission behavior, which can navigate away or reload the page.\n- e.preventDefault() cancels that default action so your JavaScript can handle the submission itself. It does not stop your callback — it stops the browser. Code after it runs normally.\n- This is the reason the BMI calculator needs (e) at all: without the event object you cannot call preventDefault().",
+      code: "const form = document.querySelector(\"form\");\n\nform.addEventListener(\"submit\", (e) => {\n  e.preventDefault(); // stop the browser's default submission\n\n  // ...validation and calculation run here, page stays put\n});",
       keyPoints: [
-        "Delegation exploits bubbling: one stable listener, many dynamic children",
-        "closest() finds the meaningful ancestor of the actual click target",
-        "Non-bubbling events need focusin/focusout or capture instead",
+        "submit belongs on the form element — Enter key submissions bypass the button",
+        "preventDefault() stops the browser's default action, not your callback",
+        "You need the event object (e) precisely to call preventDefault()",
       ],
     },
     {
-      title: "Events you will actually debug: input, submit, scroll, keys",
+      title: "Reading input: .value is a string, and when you read it matters",
       content:
-        "- input fires on every value change as the user types; change fires when the value is committed (blur for text fields, immediately for checkboxes). Use input for live validation, change for final values.\n- For forms, listen to submit on the form element, never click on the submit button — Enter-key submissions bypass the button. Call preventDefault() in the submit handler to take over.\n- keydown is the key event that works for everything; keypress is deprecated. To react to text actually being inserted, use the input event.\n- Scroll and touch handlers run while the browser is trying to paint frames. Mark them passive, keep the work minimal, and debounce or throttle anything expensive.",
-      code: "// Tells the browser this handler never calls preventDefault(),\n// so scrolling is not blocked while waiting for JavaScript.\nwindow.addEventListener(\"scroll\", onScroll, { passive: true });\n\n// input: every keystroke. change: committed value.\ninput.addEventListener(\"input\", updatePreview);\nform.addEventListener(\"change\", persistDraft);\n\n// Take over form handling the correct way\nform.addEventListener(\"submit\", (event) => {\n  event.preventDefault();\n  submitWithFetch(new FormData(form));\n});",
+        "- document.querySelector(\"#height\").value returns what the user typed as a string: \"170\", not 170.\n- Convert before doing math: parseInt(\"170\") gives 170. But parseInt stops at the first non-integer character — parseInt(\"170.5\") gives 170. Use Number() when decimal input should be accepted.\n- Read the values INSIDE the submit callback. There are two moments in time: when the script first loads (the inputs are still empty) and when the user submits (the inputs hold their values). Reading inside the callback gets the values as of submission time.\n- 'Taking values inside the form' does not make them part of the form — they are ordinary local variables of the callback's function scope, created fresh on every submission.",
+      code: "form.addEventListener(\"submit\", (e) => {\n  e.preventDefault();\n\n  // Read INSIDE the callback: values as of submit time.\n  const rawHeight = document.querySelector(\"#height\").value; // \"170\"\n  const height = Number(rawHeight); // 170 (parseInt(\"170.5\") would give 170)\n});",
       keyPoints: [
-        "input for live values, change for committed values, submit on the form element",
-        "keydown replaces the deprecated keypress; input replaces text-matching key logic",
-        "passive listeners keep scrolling smooth; debounce expensive work",
+        ".value always hands you a string, even when the user typed digits",
+        "parseInt truncates decimals; Number() keeps them",
+        "Read inputs inside the submit callback to capture what the user entered",
       ],
     },
     {
-      title: "Cleaning up and custom events",
+      title: "Validation done right: order, NaN and early returns",
       content:
-        "- In single-page apps, listeners on document or window outlive the component that added them. Every listener added in an effect must be removed on cleanup, or you get duplicate handlers, stale state, and memory leaks. An AbortSignal removes many listeners with one call.\n- Components can also communicate through custom events: create a CustomEvent with a detail payload and dispatch it on a shared ancestor such as document. This is a lightweight publish/subscribe mechanism built into the DOM, useful when two components share no direct relationship.",
-      code: "// Declare and dispatch a domain event\nconst cartChanged = new CustomEvent(\"cart:changed\", {\n  detail: { itemCount: 3 },\n  bubbles: true,\n});\ndocument.dispatchEvent(cartChanged);\n\n// Any part of the app can react without direct coupling\ndocument.addEventListener(\"cart:changed\", (event) => {\n  badge.textContent = `${event.detail.itemCount} items`;\n});",
+        "- The ordering bug from the original code: it converted with parseInt first, then checked height === \"\". But parseInt(\"\") is NaN, not \"\", so the empty-string check can never fire. Check the raw .value before converting.\n- || means OR: the whole condition is true if any part is true. In the original code, isNaN(height) was the check that actually caught bad input like \"abc\" (which becomes NaN).\n- Zero slips through a height < 0 check — and a height of 0 breaks the BMI formula. Validate with !Number.isFinite(height) || height <= 0, which rejects NaN, Infinity, zero and negatives in one line.\n- return exits the callback immediately, so the calculation only runs after every check passes. This is why the improved version does not need a big else block. An else if chain also skips all remaining checks once one branch matches.",
+      code: "form.addEventListener(\"submit\", (e) => {\n  e.preventDefault();\n\n  const rawHeight = document.querySelector(\"#height\").value;\n  const height = Number(rawHeight);\n  const results = document.querySelector(\"#results\");\n\n  // Empty check FIRST, on the raw string.\n  if (rawHeight.trim() === \"\") {\n    results.textContent = \"Please enter a height.\";\n    return; // exit the callback — nothing below runs\n  }\n\n  // Then numeric validity: rejects NaN, Infinity, 0 and negatives.\n  if (!Number.isFinite(height) || height <= 0) {\n    results.textContent = \"Please give a valid height.\";\n    return;\n  }\n\n  // ...same for weight, then calculate\n});",
       keyPoints: [
-        "Every added listener needs a removal path in component-based apps",
-        "AbortController turns N removals into one abort() call",
-        "CustomEvent with detail is DOM-native pub/sub for decoupled components",
+        "parseInt(\"\") is NaN — check the raw string before converting",
+        "Validate with !Number.isFinite(x) || x <= 0 to also reject zero",
+        "return exits the callback, replacing the need for nested else blocks",
+      ],
+    },
+    {
+      title: "Showing results: textContent, template literals and the BMI math",
+      content:
+        "- element.textContent = \"text\" replaces the element's content with plain text. innerHTML interprets its string as HTML — more power than needed here and unsafe with user-derived text.\n- Template literals (`...${value}`) insert variables into strings; toFixed(2) formats a number to two decimal places but returns a string — fine, because it is only being displayed.\n- BMI = weight (kg) / height (m) squared. With height in centimeters that becomes weight / ((height * height) / 10000) — for 170 cm and 65 kg: 65 / (1.7 x 1.7) = 22.49.",
+      code: "// BMI = weight(kg) / height(m)^2. Height arrives in cm:\n// (height / 100)^2 = (height * height) / 10000\nconst bmi = weight / ((height * height) / 10000);\n\n// 170 cm, 65 kg  ->  65 / (1.7 * 1.7) = 22.49\nresults.textContent = bmi.toFixed(2); // \"22.49\" — a string, fine for display",
+      keyPoints: [
+        "textContent for plain text; innerHTML only when you really mean HTML",
+        "Template literals insert variables; toFixed(2) returns a formatted string",
+        "Dividing cm-squared by 10000 converts the BMI denominator to meters squared",
+      ],
+    },
+    {
+      title: "Where events go next: bubbling, delegation and cleanup",
+      content:
+        "- Once click and submit feel natural, three ideas extend this model to production code. First, events travel through the DOM in phases: capture from window down to the target, then bubble back up — which lets one parent listener handle clicks for many children (event delegation using e.target and closest()).\n- Second, listeners added inside components must be removed on cleanup; an AbortController signal removes many listeners with one abort() call.\n- Third, elements can communicate through CustomEvent with a detail payload — DOM-native publish/subscribe. The (e) you learned here is the same object in every one of these patterns.",
+      code: "// One listener handles every item, even ones added later.\nlist.addEventListener(\"click\", (e) => {\n  const item = e.target.closest(\"li\");\n  if (item) item.classList.toggle(\"done\");\n});",
+      keyPoints: [
+        "Events capture down and bubble up — the basis of event delegation",
+        "Component listeners need cleanup; AbortController does it in one call",
+        "The same event object powers delegation, cleanup and custom events",
       ],
     },
   ],
   commonMistakes: [
     {
-      mistake: "Calling stopPropagation() to stop a form from submitting or a link from navigating.",
-      fix: "Use preventDefault(). stopPropagation only affects which listeners run, never the browser's default action.",
+      mistake: "Checking height === \"\" after converting with parseInt.",
+      fix: "parseInt(\"\") is NaN, not \"\", so that check never fires. Check the raw .value string first, then convert.",
     },
     {
-      mistake: "Trying to removeEventListener with a new inline arrow function.",
-      fix: "Store the handler in a variable first, or add listeners with an AbortSignal and call abort(); removal matches by function reference.",
+      mistake: "Using parseInt() when decimal input should be accepted.",
+      fix: "parseInt(\"170.5\") returns 170. Use Number() (or parseFloat) so decimal heights and weights survive conversion.",
     },
     {
-      mistake: "Reading event.target assuming it is the element the listener is attached to.",
-      fix: "target is the deepest element clicked. Use currentTarget for the listener's element, or closest(selector) to find a meaningful ancestor of target.",
+      mistake: "Accepting 0 as a valid height or weight.",
+      fix: "height < 0 does not reject zero, and zero breaks the BMI formula. Use !Number.isFinite(height) || height <= 0.",
     },
     {
-      mistake: "Adding listeners inside a component effect without a cleanup function.",
-      fix: "Return a cleanup that removes the listeners, or pass an AbortController signal and call abort() in the cleanup.",
+      mistake: "Listening for click on the submit button instead of submit on the form.",
+      fix: "Pressing Enter submits the form without clicking the button. Attach the listener to the form and handle the submit event.",
     },
     {
-      mistake: "Delegating events that do not bubble, like focus and blur.",
-      fix: "Use focusin and focusout (which bubble), or attach the container listener with capture: true.",
+      mistake: "Using innerHTML to display user-derived values.",
+      fix: "innerHTML parses its string as HTML. Use textContent for plain text results and messages.",
+    },
+    {
+      mistake: "Confusing btn with e.target.",
+      fix: "btn is the button you configured at setup time (from forEach); e.target is the element involved in the event at click time. They often match but are obtained differently.",
     },
   ],
   interviewFocus: [
-    "Walk through the capture, target, and bubble phases and state where a normal listener runs",
-    "Implement event delegation live for a dynamic list and explain why it survives new items and re-renders",
-    "Explain the difference between target, currentTarget, preventDefault, and stopPropagation",
-    "Describe how listeners leak in single-page apps and how AbortController solves cleanup",
-    "Explain what passive listeners do for scroll performance on the main thread",
+    "Explain where the event object comes from and why you never assign e yourself",
+    "Explain the difference between btn (setup time) and e.target (event time)",
+    "Explain what preventDefault() stops and what it does not stop",
+    "Explain why form inputs must be read inside the submit callback",
+    "Walk through why parseInt(\"\") is NaN and how that breaks empty-input validation",
   ],
   studyChecklist: [
-    "Build a todo list where one delegated listener handles add, toggle, and delete actions",
-    "Log a click in a nested list and identify target vs currentTarget at each level",
-    "Convert a snippet using inline onclick to addEventListener with options",
-    "Demonstrate stopPropagation versus stopImmediatePropagation with two listeners on the same element",
-    "Use one AbortController to add and remove three different listeners",
-    "Explain the three event phases out loud in under two minutes without notes",
+    "Rebuild the color changer: forEach + addEventListener, logging btn and e on every click",
+    "Rebuild the BMI calculator with Number(), empty-input checks before conversion, and early returns",
+    "Extend the BMI calculator to also display the entered height and weight using template literals",
+    "Log btn and e.target in nested markup and describe when they differ",
+    "Submit a form without preventDefault(), explain what the browser did, then fix it",
+    "Explain the two moments — script load vs form submit — out loud, and why values are read inside the callback",
   ],
 };
