@@ -313,16 +313,18 @@ function PracticeInner() {
   if (screen === "config") {
     return (
       <div className="flex flex-col gap-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">Practice</h1>
+        <header className="animate-fade">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-accent">
+            Live Generation
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">Practice Sessions</h1>
           <p className="mt-1 text-sm text-muted">
-            Configure a focused session. AI-generated questions adapt to what you have already
-            seen.
+            Configure a targeted session. Every question is dynamically crafted by AI to match your selected topic and difficulty.
           </p>
         </header>
 
         {generateError ? <ErrorNote message={generateError} /> : null}
-        {generating ? <LoadingState label="Writing your first question…" /> : null}
+        {generating ? <LoadingState label="Synthesizing your first question…" /> : null}
 
         <PracticeConfig config={config} onChange={setConfig} onStart={startSession} starting={generating} />
       </div>
@@ -330,53 +332,81 @@ function PracticeInner() {
   }
 
   if (!current) {
-    return <LoadingState label="Loading question…" />;
+    return <LoadingState label="Preparing question…" />;
   }
 
-  const progress = `Question ${index + 1} / ${config.count}`;
+  const progressText = `Question ${index + 1} of ${config.count}`;
+  const progressPercent = Math.round(((index + (confidenceRecorded ? 1 : 0.5)) / config.count) * 100);
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Session Progress Header */}
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4 shadow-2xs">
+        <div className="flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={() => setScreen("config")}
+            className="font-medium text-muted hover:text-fg transition-colors flex items-center gap-1"
+          >
+            ← Exit Session
+          </button>
+          <div className="flex items-center gap-2 font-mono text-[11px] text-muted">
+            <span className="font-semibold text-fg">{progressText}</span>
+            <span className="text-faint">({progressPercent}%)</span>
+          </div>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-border-subtle">
+          <div
+            className="bar-fill h-full rounded-full bg-accent"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+
       <QuestionCard
         topic={current.topic}
         category={current.category}
         difficulty={current.difficulty}
         question={current.question}
-        progress={progress}
+        progress={progressText}
         actions={
           current.source === "ai" ? (
-            <span className="mt-4 inline-flex items-center gap-1.5 text-xs text-faint">
-              <span aria-hidden>✨</span> AI-generated question
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-accent">
+              <span aria-hidden>✦</span> AI-Generated Question
             </span>
           ) : undefined
         }
       />
 
       {!revealed ? (
-        <section className="rounded-lg border border-border bg-surface p-5">
+        <section className="rounded-xl border border-border bg-surface p-6 shadow-2xs">
           <AnswerEditor value={answer} onChange={setAnswer} onSubmit={reveal} />
         </section>
       ) : (
         <div className="flex flex-col gap-6">
           {/* Your answer */}
-          <section className="animate-fade rounded-lg border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-              Your Answer
-            </h3>
+          <section className="animate-fade rounded-xl border border-border bg-surface p-6 shadow-2xs">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+                Your Answer
+              </h3>
+              <span className="font-mono text-[10px] text-faint">Submitted</span>
+            </div>
             {answer.trim() ? (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">{answer}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg bg-surface-2/60 p-4 rounded-lg border border-border-subtle font-sans">
+                {answer}
+              </p>
             ) : (
-              <p className="text-sm italic text-faint">
-                You answered without writing anything down. Even a rough written answer gives the AI
-                feedback something to work with.
+              <p className="text-xs italic text-faint bg-surface-2/40 p-4 rounded-lg border border-border-subtle">
+                You advanced without entering a written answer. Providing even bullet points gives the AI evaluator specific material to assess.
               </p>
             )}
           </section>
 
           {/* Ideal answer */}
-          <section className="animate-fade rounded-lg border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-              Ideal Answer
+          <section className="animate-fade rounded-xl border border-border bg-surface p-6 shadow-2xs">
+            <h3 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
+              <span className="text-accent font-bold">✓</span> Expected / Ideal Answer
             </h3>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">
               {current.idealAnswer}
@@ -388,25 +418,28 @@ function PracticeInner() {
             ) : null}
           </section>
 
-          {/* Deep explanation (static from question data) */}
-          <section className="animate-fade rounded-lg border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-              Deep Explanation
+          {/* Deep explanation */}
+          <section className="animate-fade rounded-xl border border-border bg-surface p-6 shadow-2xs">
+            <h3 className="mb-3 font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+              Deep Explanation & Nuance
             </h3>
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg">
               {current.explanation}
             </p>
             {current.interviewTip ? (
-              <p className="mt-4 rounded-md border border-accent/25 bg-accent-soft/40 p-3 text-sm text-fg">
-                <span aria-hidden className="mr-1.5">💡</span>
-                <span className="font-medium">Interview tip:</span> {current.interviewTip}
-              </p>
+              <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-accent/25 bg-accent-soft/40 p-3.5 text-xs text-fg">
+                <span aria-hidden className="text-accent font-bold text-sm">💡</span>
+                <div>
+                  <span className="font-semibold text-accent">Interview Tip: </span>
+                  <span className="text-fg">{current.interviewTip}</span>
+                </div>
+              </div>
             ) : null}
           </section>
 
-          {/* Confidence */}
+          {/* Confidence self-rating */}
           {!confidenceRecorded ? (
-            <section className="rounded-lg border border-border bg-surface p-5">
+            <section className="rounded-xl border border-border bg-surface p-6 shadow-2xs">
               <ConfidenceSelector onSelect={(confidence) => advance(confidence)} />
             </section>
           ) : null}
@@ -421,34 +454,54 @@ function PracticeInner() {
                 onFollowUp={followUp ? undefined : runFollowUp}
               />
             ) : (
-              <section className="rounded-lg border border-border bg-surface p-5">
-                {evaluateError ? (
-                  <div className="flex flex-col gap-3">
-                    <ErrorNote message={evaluateError} retry={runEvaluation} />
+              <section className="rounded-xl border border-border bg-surface p-6 shadow-2xs">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+                      AI Performance Evaluation
+                    </h3>
+                    <span className="text-xs text-faint">Instant LLM Grading</span>
                   </div>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={runEvaluation}
-                  disabled={evaluating || !answer.trim()}
-                  className={buttonStyles.secondary}
-                >
-                  {evaluating ? "Evaluating…" : "Get AI Feedback"}
-                </button>
-                {!answer.trim() ? (
-                  <p className="mt-2 text-xs text-faint">
-                    Write an answer first so the feedback has something to evaluate.
-                  </p>
-                ) : null}
+                  {evaluateError ? (
+                    <ErrorNote message={evaluateError} retry={runEvaluation} />
+                  ) : null}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                    <p className="text-xs text-muted">
+                      {answer.trim()
+                        ? "Get detailed analysis of what you nailed, what you missed, and how to phrase it better."
+                        : "Write an answer above to enable AI evaluation."}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={runEvaluation}
+                      disabled={evaluating || !answer.trim()}
+                      className={buttonStyles.secondary}
+                    >
+                      {evaluating ? (
+                        <>
+                          <span className="h-3 w-3 animate-spin rounded-full border-2 border-fg border-t-transparent" />
+                          Evaluating…
+                        </>
+                      ) : (
+                        "Get AI Feedback"
+                      )}
+                    </button>
+                  </div>
+                </div>
               </section>
             )
           ) : null}
 
           {/* AI explanations */}
-          <section className="rounded-lg border border-border bg-surface p-5">
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
-              Learn More
-            </h3>
+          <section className="rounded-xl border border-border bg-surface p-6 shadow-2xs">
+            <div className="mb-4">
+              <h3 className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+                Explore Alternative Perspectives
+              </h3>
+              <p className="mt-0.5 text-xs text-faint">
+                Select an explanation mode to view this concept from different angles.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               {EXPLANATION_ACTIONS.map((action) => (
                 <button
@@ -456,7 +509,7 @@ function PracticeInner() {
                   type="button"
                   title={action.hint}
                   onClick={() => runExplanation(action.mode)}
-                  className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:border-border-strong hover:text-fg"
+                  className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg shadow-2xs transition-all hover:border-accent hover:text-accent hover:bg-surface-2"
                 >
                   {action.label}
                 </button>
@@ -465,33 +518,33 @@ function PracticeInner() {
 
             <div className="mt-4 flex flex-col gap-4">
               {(Object.entries(explanations) as [ExplanationMode, ExplanationState | "loading"][]).map(
-                  ([mode, state]) =>
-                    state === "loading" ? (
-                      <AiResponse key={mode} title={labelFor(mode)} loading />
-                    ) : (
-                      <AiResponse
-                        key={mode}
-                        title={state.title || labelFor(mode)}
-                        content={state.content}
-                        code={state.code}
-                        keyPoints={state.keyPoints}
-                        error={explanationErrors[mode] ?? null}
-                        onRetry={() => runExplanation(mode)}
-                      />
-                    ),
-                )}
+                ([mode, state]) =>
+                  state === "loading" ? (
+                    <AiResponse key={mode} title={labelFor(mode)} loading />
+                  ) : (
+                    <AiResponse
+                      key={mode}
+                      title={state.title || labelFor(mode)}
+                      content={state.content}
+                      code={state.code}
+                      keyPoints={state.keyPoints}
+                      error={explanationErrors[mode] ?? null}
+                      onRetry={() => runExplanation(mode)}
+                    />
+                  ),
+              )}
             </div>
           </section>
 
-          {/* Move on */}
+          {/* Next Question / Finish */}
           {confidenceRecorded ? (
-            <div className="flex justify-end">
+            <div className="flex justify-end pt-2">
               <button
                 type="button"
                 onClick={() => advance("strong")}
-                className={buttonStyles.secondary}
+                className={buttonStyles.primary}
               >
-                {index + 1 >= config.count ? "Finish session" : "Continue"} →
+                {index + 1 >= config.count ? "Finish Session" : "Next Question"} <span aria-hidden>→</span>
               </button>
             </div>
           ) : null}

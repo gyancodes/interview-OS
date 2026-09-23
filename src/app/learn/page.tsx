@@ -26,8 +26,6 @@ function LearnInner() {
   const [error, setError] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load a guide when the topic/level selection changes. Curated material is
-  // served by the server and always wins over any locally cached AI version.
   useEffect(() => {
     let active = true;
     setError(null);
@@ -56,7 +54,6 @@ function LearnInner() {
     async (force = false) => {
       setError(null);
       if (!force) {
-        // Curated (server) first, then cache; AI generation fills the rest.
         const curated = await fetchCuratedMaterial(topic, level);
         if (curated) {
           setMaterial(curated.material);
@@ -95,209 +92,277 @@ function LearnInner() {
 
   return (
     <div className="flex flex-col gap-10">
-      <section className="animate-fade flex flex-col gap-2 pt-4">
-        <h1 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
-          Learning Materials
+      {/* Header */}
+      <section className="animate-fade flex flex-col gap-2 pt-2">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-widest text-accent">
+          Curated & AI Knowledge Base
+        </p>
+        <h1 className="text-balance text-2xl font-bold tracking-tight text-fg sm:text-4xl">
+          Engineering Study Guides
         </h1>
         <p className="max-w-2xl text-sm text-muted">
-          Pick a topic and skill level — AI generates a structured study guide with concept
-          walkthroughs, code examples, common mistakes and what interviewers actually probe.
+          Structured concepts, architectural tradeoffs, common mistakes, and what interviewers actually evaluate in top engineering loops.
         </p>
       </section>
 
-      <section className="flex flex-col gap-6 rounded-lg border border-border bg-surface p-6 sm:p-8">
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-fg">Topic</legend>
+      {/* Selector Card */}
+      <section className="flex flex-col gap-6 rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-2xs">
+        {/* Topic Grid */}
+        <fieldset className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between">
+            <legend className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+              Select Topic
+            </legend>
+            <span className="text-xs text-faint">10 core domains</span>
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {TOPICS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setTopic(option.id)}
-                aria-pressed={topic === option.id}
-                className={cn(
-                  "rounded-md border px-3 py-2.5 text-left text-sm transition-colors",
-                  topic === option.id
-                    ? "border-accent/60 bg-accent-soft text-accent"
-                    : "border-border bg-surface-2 text-muted hover:border-border-strong hover:text-fg",
-                )}
-              >
-                {option.name}
-              </button>
-            ))}
+            {TOPICS.map((option) => {
+              const isSelected = topic === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setTopic(option.id)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "flex flex-col items-start rounded-lg border p-3 text-left transition-all duration-150",
+                    isSelected
+                      ? "border-accent bg-accent-soft text-accent shadow-xs ring-1 ring-accent/30 font-semibold"
+                      : "border-border bg-surface text-fg-muted hover:border-border-strong hover:text-fg hover:bg-surface-2",
+                  )}
+                >
+                  <span className="text-xs">{option.name}</span>
+                </button>
+              );
+            })}
           </div>
         </fieldset>
 
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-fg">Skill level</legend>
+        {/* Skill level */}
+        <fieldset className="flex flex-col gap-2">
+          <legend className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+            Skill Level
+          </legend>
           <div className="flex flex-wrap gap-2">
-            {LEVEL_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setLevel(option.value)}
-                aria-pressed={level === option.value}
-                className={cn(
-                  "rounded-md border px-3.5 py-2 text-sm transition-colors",
-                  level === option.value
-                    ? "border-accent/60 bg-accent-soft text-accent"
-                    : "border-border bg-surface-2 text-muted hover:border-border-strong hover:text-fg",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
+            {LEVEL_OPTIONS.map((option) => {
+              const isSelected = level === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setLevel(option.value)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "rounded-lg border px-4 py-2 text-xs font-medium transition-all duration-150",
+                    isSelected
+                      ? "border-accent bg-accent-soft text-accent shadow-xs ring-1 ring-accent/30 font-semibold"
+                      : "border-border bg-surface text-fg-muted hover:border-border-strong hover:text-fg hover:bg-surface-2",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
-          <p className="mt-1.5 text-xs text-faint">{levelHint}</p>
+          <p className="text-[11px] text-muted">{levelHint}</p>
         </fieldset>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-5">
           <button
             type="button"
             onClick={() => generate(Boolean(material))}
             disabled={loading}
             className={buttonStyles.primary}
           >
-            {loading
-              ? "Generating study guide…"
-              : material
-                ? "Regenerate guide"
-                : "Generate study guide"}
+            {loading ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-canvas border-t-transparent" />
+                Synthesizing Guide…
+              </>
+            ) : material ? (
+              "Regenerate Guide"
+            ) : (
+              "Generate Study Guide →"
+            )}
           </button>
           <Link href={`/practice?topic=${topic}`} className={buttonStyles.secondary}>
-            Practice {topicName} →
+            Practice {topicName} Questions →
           </Link>
         </div>
         {error ? <ErrorNote message={error} retry={() => generate(true)} /> : null}
       </section>
 
-      {loading && !material ? <LoadingState label="Generating your study guide…" /> : null}
+      {loading && !material ? (
+        <div className="py-12">
+          <LoadingState label="Synthesizing your structured study guide…" />
+        </div>
+      ) : null}
 
       {material ? (
-        <article className="flex flex-col gap-8">
-          <header className="animate-fade flex flex-col gap-2">
+        <article className="animate-fade flex flex-col gap-10">
+          {/* Guide Header */}
+          <header className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-2xs">
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full border border-border-strong bg-surface-2 px-2.5 py-0.5 font-medium text-fg">
+              <span className="rounded-md border border-border bg-surface-2 px-2.5 py-1 font-mono text-[11px] font-semibold text-fg">
                 {topicName}
               </span>
               <span className="text-faint">/</span>
-              <span className="rounded-full bg-accent/10 px-2.5 py-0.5 font-medium text-accent">
+              <span className="rounded-md border border-accent/20 bg-accent-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-accent">
                 {DIFFICULTY_LABELS[level]}
               </span>
               <span
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 font-medium",
-                  source === "curated" ? "bg-strong/10 text-strong" : "bg-accent/10 text-accent",
+                  "rounded-md border px-2.5 py-1 font-mono text-[11px] font-medium",
+                  source === "curated"
+                    ? "border-strong/20 bg-strong-soft text-strong"
+                    : "border-border bg-surface-2 text-muted",
                 )}
               >
-                {source === "curated" ? "Curated" : "AI generated"}
+                {source === "curated" ? "Curated Foundation" : "AI Synthesized"}
               </span>
             </div>
-            <h2 className="text-balance text-xl font-semibold text-fg sm:text-2xl">{material.title}</h2>
-            <p className="max-w-3xl text-sm text-muted">{material.overview}</p>
+
+            <h2 className="text-balance text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+              {material.title}
+            </h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-fg-muted">{material.overview}</p>
+
             {material.prerequisites.length > 0 ? (
-              <p className="text-xs text-faint">
-                <span className="font-medium text-muted">Before starting: </span>
-                {material.prerequisites.join(" · ")}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3 text-xs text-muted">
+                <span className="font-semibold text-fg">Prerequisites:</span>
+                {material.prerequisites.map((prereq, index) => (
+                  <span
+                    key={index}
+                    className="rounded bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-muted border border-border"
+                  >
+                    {prereq}
+                  </span>
+                ))}
+              </div>
             ) : null}
           </header>
 
-          <section className="flex flex-col gap-5">
-            <SectionHeading title="Study Guide" />
-            {material.sections.map((section, sectionIndex) => (
-              <section
-                key={`${section.title}-${sectionIndex}`}
-                className="rounded-lg border border-border bg-surface p-5"
-              >
-                <h3 className="flex items-baseline gap-3 font-medium text-fg">
-                  <span className="font-mono text-xs text-faint">
-                    {String(sectionIndex + 1).padStart(2, "0")}
-                  </span>
-                  {section.title}
-                </h3>
-                <div className="mt-3 flex flex-col gap-3">
-                  {section.content
-                    .split("\n")
-                    .filter((line) => line.trim().length > 0)
-                    .map((paragraph, lineIndex) => (
-                      <p key={lineIndex} className="text-sm leading-relaxed text-muted">
-                        {paragraph}
-                      </p>
-                    ))}
-                </div>
-                {section.code ? (
-                  <div className="mt-4">
-                    <CodeBlock code={section.code} />
+          {/* Core Sections */}
+          <section className="flex flex-col gap-6">
+            <SectionHeading eyebrow="Concepts" title="Core Breakdown" />
+            <div className="flex flex-col gap-4">
+              {material.sections.map((section, sectionIndex) => (
+                <section
+                  key={`${section.title}-${sectionIndex}`}
+                  className="rounded-xl border border-border bg-surface p-6 shadow-2xs"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-surface-2 font-mono text-xs font-bold text-accent border border-border">
+                      {String(sectionIndex + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="text-base font-semibold text-fg">
+                      {section.title}
+                    </h3>
                   </div>
-                ) : null}
-                {section.keyPoints.length > 0 ? (
-                  <ul className="mt-4 flex flex-col gap-1.5">
-                    {section.keyPoints.map((point, pointIndex) => (
-                      <li key={pointIndex} className="flex gap-2 text-sm text-fg">
-                        <span aria-hidden className="text-accent">
-                          •
-                        </span>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-            ))}
+
+                  <div className="mt-4 flex flex-col gap-3">
+                    {section.content
+                      .split("\n")
+                      .filter((line) => line.trim().length > 0)
+                      .map((paragraph, lineIndex) => (
+                        <p key={lineIndex} className="text-sm leading-relaxed text-fg-muted">
+                          {paragraph}
+                        </p>
+                      ))}
+                  </div>
+
+                  {section.code ? (
+                    <div className="mt-4">
+                      <CodeBlock code={section.code} caption={`${section.title} implementation`} />
+                    </div>
+                  ) : null}
+
+                  {section.keyPoints.length > 0 ? (
+                    <div className="mt-4 rounded-lg border border-border-subtle bg-surface-2/60 p-4">
+                      <h4 className="mb-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted">
+                        Key Engineering Takeaways
+                      </h4>
+                      <ul className="flex flex-col gap-1.5">
+                        {section.keyPoints.map((point, pointIndex) => (
+                          <li key={pointIndex} className="flex gap-2 text-xs leading-relaxed text-muted">
+                            <span aria-hidden className="text-accent font-bold">•</span>
+                            {point}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </section>
+              ))}
+            </div>
           </section>
 
+          {/* Common Mistakes */}
           {material.commonMistakes.length > 0 ? (
-            <section className="flex flex-col gap-3">
-              <SectionHeading title="Common Mistakes" />
+            <section className="flex flex-col gap-4">
+              <SectionHeading eyebrow="Pitfalls" title="Common Interview Mistakes & Corrections" />
               <div className="grid gap-3 sm:grid-cols-2">
                 {material.commonMistakes.map((entry, index) => (
-                  <div key={index} className="rounded-lg border border-weak/30 bg-surface p-4">
-                    <p className="text-sm font-medium text-fg">
-                      <span aria-hidden className="mr-1.5 text-weak">
-                        ✕
-                      </span>
-                      {entry.mistake}
-                    </p>
-                    <p className="mt-1.5 text-sm text-muted">
-                      <span className="font-medium text-strong">Fix: </span>
-                      {entry.fix}
-                    </p>
+                  <div key={index} className="flex flex-col justify-between rounded-xl border border-border bg-surface p-5 shadow-2xs">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs font-semibold text-weak">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-weak-soft text-[10px]">
+                          ✕
+                        </span>
+                        <span>Anti-Pattern / Common Flaw</span>
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-fg">
+                        {entry.mistake}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 border-t border-border-subtle pt-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-strong">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-strong-soft text-[10px]">
+                          ✓
+                        </span>
+                        <span>Correct Approach</span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted">
+                        {entry.fix}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
           ) : null}
 
-          <section className="grid gap-8 lg:grid-cols-2">
+          {/* Interview Focus & Checklist */}
+          <section className="grid gap-6 lg:grid-cols-2">
             {material.interviewFocus.length > 0 ? (
-              <div>
-                <SectionHeading title="What Interviewers Probe" />
+              <div className="flex flex-col gap-3">
+                <SectionHeading eyebrow="Probing" title="What Interviewers Drill On" />
                 <ul className="flex flex-col gap-2">
                   {material.interviewFocus.map((item, index) => (
                     <li
                       key={index}
-                      className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted"
+                      className="flex items-start gap-3 rounded-xl border border-border bg-surface p-4 text-xs text-fg shadow-2xs"
                     >
-                      {item}
+                      <span className="text-accent font-bold">↳</span>
+                      <span className="leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             ) : null}
+
             {material.studyChecklist.length > 0 ? (
-              <div>
-                <SectionHeading title="Practice Checklist" />
+              <div className="flex flex-col gap-3">
+                <SectionHeading eyebrow="Action Items" title="Mastery Checklist" />
                 <ul className="flex flex-col gap-2">
                   {material.studyChecklist.map((item, index) => (
                     <li
                       key={index}
-                      className="flex gap-2.5 rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted"
+                      className="flex items-start gap-3 rounded-xl border border-border bg-surface p-4 text-xs text-fg shadow-2xs"
                     >
-                      <span aria-hidden className="font-mono text-xs text-accent">
-                        ☐
-                      </span>
-                      {item}
+                      <span className="font-mono text-accent font-bold">☐</span>
+                      <span className="leading-relaxed">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -307,9 +372,17 @@ function LearnInner() {
         </article>
       ) : !loading && hydrated ? (
         <EmptyState
-          icon="📚"
-          title="No study guide yet"
-          description="Choose a topic and skill level above, then generate an AI-built study guide tailored to that level."
+          title="No study guide selected"
+          description="Choose a topic and skill level above, then generate a comprehensive study guide tailored to that level."
+          action={
+            <button
+              type="button"
+              onClick={() => generate(false)}
+              className={buttonStyles.primary}
+            >
+              Generate Guide for {topicName} →
+            </button>
+          }
         />
       ) : null}
     </div>

@@ -1,47 +1,59 @@
 @import "tailwindcss";
 
 /*
- * InterviewOS design tokens.
- * Clean, modern, minimal: white canvas, near-black text, blue accent.
- * Black carries structure (buttons, code, headings), blue carries
- * interactivity (links, focus, progress, active states).
+ * InterviewOS Design System Tokens
+ * Clean, modern, minimal: Pure whites, rich high-contrast blacks, and electric blue accents.
+ * Black provides structural clarity, crisp typography, and high-impact actions.
+ * Blue powers interactivity, highlights, focus states, and metrics.
+ * White delivers pristine spacing, focus, and visual calm.
  */
 @theme {
   --color-canvas: #ffffff;
+  --color-canvas-subtle: #fafafa;
   --color-surface: #ffffff;
-  --color-surface-2: #f5f7fa;
-  --color-border: #e6e9ef;
-  --color-border-strong: #d3d9e3;
+  --color-surface-2: #f8fafc;
+  --color-surface-3: #f1f5f9;
 
-  --color-fg: #0b0d12;
-  --color-muted: #566070;
-  --color-faint: #8b94a3;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-border-strong: #cbd5e1;
+
+  --color-fg: #09090b;
+  --color-fg-muted: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
 
   --color-accent: #2563eb;
-  --color-accent-soft: #eaf1fe;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-soft: #eff6ff;
+  --color-accent-subtle: #dbeafe;
 
-  --color-strong: #15803d;
-  --color-partial: #b45309;
-  --color-weak: #dc2626;
+  --color-strong: #059669;
+  --color-strong-soft: #ecfdf5;
+  --color-partial: #d97706;
+  --color-partial-soft: #fffbeb;
+  --color-weak: #e11d48;
+  --color-weak-soft: #fff1f2;
 
-  --color-code-bg: #0b0e14;
-  --color-code-fg: #e6edf3;
+  --color-code-bg: #090a0f;
+  --color-code-fg: #f8fafc;
 
   --font-sans:
-    var(--font-inter), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
   --font-mono:
     var(--font-jetbrains), ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono",
     monospace;
 
-  --animate-rise: rise 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-rise: rise 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade: fade 200ms ease-out both;
+  --animate-pulse-glow: pulseGlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -58,38 +70,54 @@
   }
 }
 
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.92);
+  }
+}
+
 @layer base {
   html {
     color-scheme: light;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: var(--color-canvas);
     color: var(--color-fg);
     font-family: var(--font-sans);
-    font-size: 15.5px;
-    line-height: 1.65;
-    letter-spacing: -0.006em;
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -0.011em;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1,
   h2,
   h3,
   h4 {
-    letter-spacing: -0.021em;
+    letter-spacing: -0.028em;
+    font-weight: 600;
+    color: var(--color-fg);
   }
 
   ::selection {
-    background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+    background-color: #2563eb;
+    color: #ffffff;
   }
 
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   a {
@@ -99,15 +127,40 @@
 }
 
 @layer utilities {
-  /* Thin, light scrollbars so panels keep the minimal feel. */
+  .bg-grid-pattern {
+    background-image: radial-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .glass-header {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .hover-lift {
+    transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms ease, border-color 220ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -6px rgba(37, 99, 235, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  }
+
+  /* Thin, minimal scrollbars */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-strong) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
@@ -123,8 +176,12 @@
     animation: var(--animate-fade);
   }
 
-  /* Progress bar fill used by ProgressBar. */
+  .animate-pulse-glow {
+    animation: var(--animate-pulse-glow);
+  }
+
+  /* Smooth transition on progress bars */
   .bar-fill {
-    transition: width 400ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width 500ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }

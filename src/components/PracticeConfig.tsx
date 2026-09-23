@@ -21,8 +21,10 @@ function OptionGroup<T extends string | number>({
   renderHint?: boolean;
 }) {
   return (
-    <fieldset>
-      <legend className="mb-2 text-sm font-medium text-fg">{legend}</legend>
+    <fieldset className="flex flex-col gap-2">
+      <legend className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+        {legend}
+      </legend>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
@@ -32,10 +34,10 @@ function OptionGroup<T extends string | number>({
             aria-pressed={value === option.value}
             title={option.hint}
             className={cn(
-              "rounded-md border px-3.5 py-2 text-sm transition-colors",
+              "rounded-lg border px-4 py-2 text-xs font-medium transition-all duration-150",
               value === option.value
-                ? "border-accent/60 bg-accent-soft text-accent"
-                : "border-border bg-surface-2 text-muted hover:border-border-strong hover:text-fg",
+                ? "border-accent bg-accent-soft text-accent shadow-xs ring-1 ring-accent/30 font-semibold"
+                : "border-border bg-surface text-fg-muted hover:border-border-strong hover:text-fg hover:bg-surface-2",
             )}
           >
             {option.label}
@@ -43,7 +45,7 @@ function OptionGroup<T extends string | number>({
         ))}
       </div>
       {renderHint ? (
-        <p className="mt-1.5 text-xs text-faint">
+        <p className="text-[11px] text-muted">
           {options.find((option) => option.value === value)?.hint}
         </p>
       ) : null}
@@ -69,51 +71,87 @@ export function PracticeConfig({
   starting?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-6 rounded-lg border border-border bg-surface p-6 sm:p-8">
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium text-fg">Topic</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          {TOPICS.map((topic) => (
-            <button
-              key={topic.id}
-              type="button"
-              onClick={() => onChange({ ...config, topic: topic.id })}
-              aria-pressed={config.topic === topic.id}
-              className={cn(
-                "rounded-md border px-3 py-2.5 text-left text-sm transition-colors",
-                config.topic === topic.id
-                  ? "border-accent/60 bg-accent-soft text-accent"
-                  : "border-border bg-surface-2 text-muted hover:border-border-strong hover:text-fg",
-              )}
-            >
-              {topic.name}
-            </button>
-          ))}
+    <div className="flex flex-col gap-8 rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-2xs">
+      {/* Topic selection */}
+      <fieldset className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between">
+          <legend className="font-mono text-xs font-semibold uppercase tracking-wider text-muted">
+            1. Select Topic
+          </legend>
+          <span className="text-xs text-faint">10 core engineering domains</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+          {TOPICS.map((topic) => {
+            const isSelected = config.topic === topic.id;
+            return (
+              <button
+                key={topic.id}
+                type="button"
+                onClick={() => onChange({ ...config, topic: topic.id })}
+                aria-pressed={isSelected}
+                className={cn(
+                  "flex flex-col items-start rounded-xl border p-3.5 text-left transition-all duration-150",
+                  isSelected
+                    ? "border-accent bg-accent-soft text-fg shadow-xs ring-1 ring-accent/30"
+                    : "border-border bg-surface text-fg hover:border-border-strong hover:bg-surface-2/60",
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-xs font-semibold tracking-tight",
+                    isSelected ? "text-accent" : "text-fg",
+                  )}
+                >
+                  {topic.name}
+                </span>
+                <span className="mt-0.5 text-[11px] text-faint line-clamp-1">{topic.tagline}</span>
+              </button>
+            );
+          })}
         </div>
       </fieldset>
 
-      <OptionGroup
-        legend="Skill level"
-        options={DIFFICULTY_FILTERS}
-        value={config.difficulty}
-        onChange={(difficulty) => onChange({ ...config, difficulty })}
-        renderHint
-      />
+      {/* Level and Count in split columns */}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <OptionGroup
+          legend="2. Difficulty Level"
+          options={DIFFICULTY_FILTERS}
+          value={config.difficulty}
+          onChange={(difficulty) => onChange({ ...config, difficulty })}
+          renderHint
+        />
 
-      <OptionGroup
-        legend="Number of questions"
-        options={PRACTICE_COUNTS.map((count) => ({ value: count, label: String(count) }))}
-        value={config.count}
-        onChange={(count) => onChange({ ...config, count })}
-      />
+        <OptionGroup
+          legend="3. Number of Questions"
+          options={PRACTICE_COUNTS.map((count) => ({ value: count, label: `${count} Questions` }))}
+          value={config.count}
+          onChange={(count) => onChange({ ...config, count })}
+        />
+      </div>
 
-      <p className="text-xs text-faint">
-        Every question is generated live by AI for this exact topic and level — no two sessions are the same.
-      </p>
+      {/* Start Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-border pt-6">
+        <div className="flex items-center gap-2 text-xs text-muted">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent-soft text-accent font-bold">
+            ✦
+          </span>
+          <span>Questions are generated live by AI adapted to your chosen domain.</span>
+        </div>
 
-      <div>
-        <button type="button" onClick={onStart} disabled={starting} className={buttonStyles.primary}>
-          {starting ? "Generating first question…" : "Start Practice"}
+        <button
+          type="button"
+          onClick={onStart}
+          disabled={starting}
+          className={cn(buttonStyles.primary, "px-6 py-2.5 text-sm font-semibold tracking-tight")}
+        >
+          {starting ? (
+            <>
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-canvas border-t-transparent" />
+              Generating Questions…
+            </>
+          ) : (
+            "Start Practice Session →"
+          )}
         </button>
       </div>
     </div>
