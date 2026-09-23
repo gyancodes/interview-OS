@@ -33,6 +33,61 @@ const MAX_FAVORITES = 200;
 const MAX_MOCKS = 50;
 
 /* -------------------------------------------------------------------------- */
+/* Per-user scoping                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Signed-in users get their own LocalStorage namespace so two accounts sharing
+ * a browser never see each other's attempts.
+ *
+ * The scope is set by `AuthProvider` during render — before any child effect
+ * reads storage — which keeps reads and writes consistent within a page load.
+ */
+let storageScope: string | null = null;
+
+const LEARNING_CACHE_KEY = "interviewos.learningMaterials";
+const MAX_LEARNING_CACHE = 60;
+
+/** Every key that is namespaced per user. */
+const SCOPED_KEYS: string[] = [...Object.values(KEYS), LEARNING_CACHE_KEY];
+
+function scopedKey(key: string): string {
+  return storageScope ? `${key}::u::${storageScope}` : key;
+}
+
+/**
+ * Points storage at a user's namespace (or back at the anonymous namespace).
+ * Called during `AuthProvider` render and after sign out.
+ */
+export function setStorageScope(userId: string | null): void {
+  const next = userId && userId.trim().length > 0 ? userId.trim() : null;
+  if (next === storageScope) return;
+  storageScope = next;
+  if (next) adoptAnonymousData(next);
+}
+
+/**
+ * One-time move of pre-auth data into the first account that signs in on this
+ * browser. The anonymous copy is removed so it cannot leak into a second
+ * account later on the same device.
+ */
+function adoptAnonymousData(userId: string): void {
+  if (!isBrowser()) return;
+  for (const key of SCOPED_KEYS) {
+    const target = `${key}::u::${userId}`;
+    try {
+      if (window.localStorage.getItem(target) !== null) continue;
+      const anonymousValue = window.localStorage.getItem(key);
+      if (anonymousValue === null) continue;
+      window.localStorage.setItem(target, anonymousValue);
+      window.localStorage.removeItem(key);
+    } catch {
+      // Storage full or unavailable: skip the migration, keep the app working.
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Low-level helpers                                                           */
 /* -------------------------------------------------------------------------- */
 
@@ -43,7 +98,7 @@ function isBrowser(): boolean {
 function readJson<T>(key: string, fallback: T): T {
   if (!isBrowser()) return fallback;
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(scopedKey(key));
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -55,7 +110,7 @@ function readJson<T>(key: string, fallback: T): T {
 function writeJson(key: string, value: unknown): void {
   if (!isBrowser()) return;
   try {
-    window.localStorage.setItem(key, JSON.stringify(value));
+    window.localStorage.setItem(scopedKey(key), JSON.stringify(value));
   } catch {
     // Quota exceeded or private mode: persistence is best-effort in the MVP.
   }
@@ -180,9 +235,6 @@ export function clearMockInterviewHistory(): void {
 /* Learning material cache                                                     */
 /* -------------------------------------------------------------------------- */
 
-const LEARNING_CACHE_KEY = "interviewos.learningMaterials";
-const MAX_LEARNING_CACHE = 60;
-
 export function getLearningMaterial(
   topic: TopicId,
   level: Difficulty,
@@ -237,3 +289,36 @@ export function summarizeAttempts(attempts: Attempt[]): AttemptSummary {
   }
   return summary;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Account-level resets (used by the profile page)                             */
+/* -------------------------------------------------------------------------- */
+
+/** Fields surfaced by the profile page's local-data panel. */
+export interface LocalDataSummary {
+  attempts: number;
+  recentQuestions: number;
+  savedQuestions: number;
+  mockInterviews: number;
+  learningMaterials: number;
+}
+
+export function getLocalDataSummary(): LocalDataSummary {
+  return {
+    attempts: getAttempts().length,
+    recentQuestions: getRecentQuestions().length,
+    savedQuestions: getSavedQuestions().length,
+    mockInterviews: getMockInterviewHistory().length,
+    learningMaterials: Object.keys(
+      readJson<Record<string, CachedLearningMaterial>>(LEARNING_CACHE_KEY, {}),
+    ).length,
+  };
+}
+
+/** Clears every persisted record for the active user scope. */
+export function clearAllLocalData(): void {
+  for (const key of SCOPED_KEYS) {
+    writeJson(key, key === LEARNING_CACHE_KEY ? {} : []);
+  }
+}
+

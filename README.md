@@ -10,6 +10,8 @@ AI-powered interview preparation for software engineers. Practice with questions
 - **Learning materials** — AI-generated study guides per topic and level: concept walkthroughs, code examples, common mistakes, interview focus areas, and a practice checklist.
 - **AI mock interviews** — timed, role-based mock interviews (frontend, backend, full stack, Node.js, DevOps) with a summary and suggested practice areas at the end.
 - **Progress tracking** — attempts, weak areas, per-topic mastery, and overall readiness are tracked locally in the browser.
+- **Accounts and sessions** — email/password sign up and sign in backed by Appwrite. The dashboard, practice, study guides and mock interviews all live behind an authenticated session.
+- **Enhanced landing page** — a public marketing page with the curriculum, feedback loop and FAQ, which adapts its call to action once you are signed in.
 
 ## Tech Stack
 
@@ -17,7 +19,8 @@ AI-powered interview preparation for software engineers. Practice with questions
 - [TypeScript](https://www.typescriptlang.org)
 - [Tailwind CSS](https://tailwindcss.com) 4
 - [Groq](https://groq.com) API for AI generation (model configurable via environment variable)
-- LocalStorage for persistence (attempts, saved questions, mock interview history)
+- LocalStorage for persistence (attempts, saved questions, mock interview history), namespaced per account
+- [Appwrite](https://appwrite.io) for accounts and sessions, using the server-side Node SDK with an HTTP-only session cookie
 
 ## Getting Started
 
@@ -25,6 +28,7 @@ AI-powered interview preparation for software engineers. Practice with questions
 
 - Node.js 18.18 or later
 - A Groq API key (free at [console.groq.com](https://console.groq.com))
+- An Appwrite project (free at [cloud.appwrite.io](https://cloud.appwrite.io))
 
 ### Setup
 
@@ -49,6 +53,20 @@ AI-powered interview preparation for software engineers. Practice with questions
 
    Then set `GROQ_API_KEY` in `.env.local`. Optionally set `GROQ_MODEL` to override the default model.
 
+   For Appwrite, set the following in `.env.local` as well:
+
+   | Variable | Scope | Purpose |
+   | --- | --- | --- |
+   | `NEXT_PUBLIC_APPWRITE_ENDPOINT` | public | Appwrite endpoint, e.g. `https://cloud.appwrite.io/v1` |
+   | `NEXT_PUBLIC_APPWRITE_PROJECT_ID` | public | Project ID from the Appwrite console |
+   | `APPWRITE_API_KEY` | server only | Creates accounts and sessions from the server |
+
+   1. Create a project, then add a **Web platform** with the hostname `localhost` (add your production domain later).
+   2. Create an **API key** with the `users.write` and `sessions.write` scopes.
+   3. Restart the dev server after saving `.env.local`.
+
+   Until Appwrite is configured, the sign-in pages show setup instructions instead of a broken form.
+
 4. Start the development server:
 
    ```bash
@@ -70,17 +88,21 @@ AI-powered interview preparation for software engineers. Practice with questions
 
 ```
 src/
-├── app/                  # Pages and API route handlers
-│   ├── api/ai/           # Server-side AI endpoints (question, evaluate, explain, learn, interview)
-│   ├── learn/            # Learning materials page
-│   ├── mock-interview/   # AI mock interview page
-│   └── practice/         # Practice session page
-├── components/           # Reusable UI components
-├── data/                 # Topic catalogue
-└── lib/                  # Core logic: AI client, prompts, storage, progress, types
+├── app/                      # Pages and API route handlers
+│   ├── (marketing)/          # Public landing page at /
+│   ├── (auth)/               # Sign in / sign up (split-screen auth shell)
+│   ├── (app)/                # Authenticated area: dashboard, practice, learn, mock-interview, profile
+│   └── api/ai/               # Server-side AI endpoints (question, evaluate, explain, learn, interview)
+├── middleware.ts             # Redirects unauthenticated requests to /login
+├── components/               # Reusable UI components
+│   ├── auth/                 # AuthProvider, auth forms, user menu, account panel
+│   └── landing/              # Landing page sections (hero, features, showcase, curriculum, FAQ)
+├── data/                     # Topic catalogue
+└── lib/                      # Core logic: AI client, prompts, storage, progress, types
+    └── appwrite/             # Appwrite config, server clients, auth actions, error mapping
 ```
 
-The Groq API key is only read inside server-side route handlers (`src/lib/groq.ts`) and is never sent to the browser.
+The Groq API key is only read inside server-side route handlers (`src/lib/groq.ts`) and is never sent to the browser. The Appwrite API key is server-only too (`src/lib/appwrite/server.ts`); the browser only ever receives an HTTP-only session cookie, and authentication state is re-verified against Appwrite on every request.
 
 ## License
 

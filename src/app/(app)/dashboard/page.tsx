@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import { firstNameFor, greetingFor } from "@/lib/appwrite/display";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { TopicCard } from "@/components/TopicCard";
 import { WeakAreaCard } from "@/components/WeakAreaCard";
 import { EmptyState, SectionHeading, buttonStyles } from "@/components/ui";
@@ -23,6 +25,7 @@ const INTERVIEW_ROLE_LABELS: Record<string, string> = Object.fromEntries(
 );
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [recents, setRecents] = useState<RecentQuestion[]>([]);
   const [mocks, setMocks] = useState<MockInterviewRecord[]>([]);
@@ -35,6 +38,9 @@ export default function DashboardPage() {
     setMocks(getMockInterviewHistory());
     setHydrated(true);
   }, []);
+
+  const firstName = useMemo(() => firstNameFor(user), [user]);
+  const greeting = useMemo(() => greetingFor(), []);
 
   const progressList: TopicProgress[] = useMemo(
     () => computeTopicProgress(attempts),
@@ -73,41 +79,54 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-14">
-      {/* Hero Section */}
-      <section className="animate-fade relative flex flex-col items-start gap-6 pt-4 sm:pt-8">
-        {/* Status Announcement Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted shadow-2xs">
-          <span className="h-2 w-2 rounded-full bg-accent animate-pulse-glow" />
-          <span className="font-medium text-fg">InterviewOS 2.0</span>
-          <span className="text-faint">·</span>
-          <span>Adaptive AI Technical Prep</span>
-        </div>
+      {/* Personalised header */}
+      <section className="animate-fade flex flex-col gap-6">
+        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+          <div className="flex flex-col gap-3">
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted shadow-2xs">
+              <span className="h-2 w-2 rounded-full bg-strong animate-pulse-glow" />
+              <span className="font-medium text-fg">{greeting}</span>
+              {user ? (
+                <>
+                  <span className="text-faint">·</span>
+                  <span className="max-w-[14rem] truncate font-mono text-[11px]">
+                    {user.email}
+                  </span>
+                </>
+              ) : null}
+            </div>
 
-        {/* Display Typography */}
-        <div className="flex max-w-3xl flex-col gap-3">
-          <h1 className="text-balance text-3xl font-bold tracking-tight text-fg sm:text-5xl sm:leading-[1.15]">
-            Master technical interviews with{" "}
-            <span className="text-accent underline decoration-accent/25 decoration-4 underline-offset-4">
-              precision & speed
-            </span>
-            .
-          </h1>
-          <p className="max-w-2xl text-base text-muted sm:text-lg">
-            Practice live AI-generated questions, read structured engineering guides, and simulate high-pressure interviews with real-time feedback.
-          </p>
-        </div>
+            <h1 className="text-balance text-2xl font-bold tracking-tight text-fg sm:text-4xl">
+              {firstName ? (
+                <>
+                  {firstName}, here is your{" "}
+                  <span className="text-gradient-accent">readiness snapshot</span>.
+                </>
+              ) : (
+                <>
+                  Your <span className="text-gradient-accent">readiness snapshot</span>.
+                </>
+              )}
+            </h1>
 
-        {/* Primary CTAs */}
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Link href="/practice" className={buttonStyles.primary}>
-            Start Practice <span aria-hidden>→</span>
-          </Link>
-          <Link href="/mock-interview" className={buttonStyles.accent}>
-            <span>✦</span> AI Mock Interview
-          </Link>
-          <Link href="/learn" className={buttonStyles.secondary}>
-            Study Guides
-          </Link>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+              {hydrated && practiced > 0
+                ? `You have answered ${practiced} ${pluralize(practiced, "question")} across ${activeTopicsCount} ${pluralize(activeTopicsCount, "topic")}. Weak areas refresh after every session.`
+                : "Answer your first AI-generated question to start tracking mastery, weak areas and interview readiness."}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/practice" className={buttonStyles.primary}>
+              Start Practice <span aria-hidden>→</span>
+            </Link>
+            <Link href="/mock-interview" className={buttonStyles.accent}>
+              <span aria-hidden>✦</span> AI Mock Interview
+            </Link>
+            <Link href="/learn" className={buttonStyles.secondary}>
+              Study Guides
+            </Link>
+          </div>
         </div>
       </section>
 
